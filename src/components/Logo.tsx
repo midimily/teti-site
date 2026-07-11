@@ -6,7 +6,7 @@ type LogoProps = {
 export function Logo({size = 'header', withWordmark = false}: LogoProps) {
   return (
     <span className={`logo logo-${size}`}>
-      <img src="/assets/teti-logo-default.png" alt="Teti logo" />
+      <img src="/assets/teti-logo-transparent.png" alt="Teti logo" />
       {withWordmark ? <span>teti.bot</span> : null}
     </span>
   );

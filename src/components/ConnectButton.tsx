@@ -17,7 +17,7 @@ export function ConnectButton({teti, onFallback}: ConnectButtonProps) {
     <Button
       className="connect-action"
       label={isOpening ? 'Opening Teti...' : 'Connect'}
-      variant={teti.status === 'online' ? 'primary' : 'secondary'}
+      variant={isDisabled ? 'secondary' : 'primary'}
       size="sm"
       isDisabled={isDisabled}
       onClick={() => {

@@ -23,8 +23,18 @@ export function Hero() {
           device.
         </Text>
         <div className="hero-actions">
-          <Button label="Explore" variant="primary" href="#registry" />
-          <Button label="Download Teti" variant="secondary" href="#download" />
+          <Button
+            className="hero-primary-action"
+            label="Explore"
+            variant="primary"
+            href="#registry"
+          />
+          <Button
+            className="hero-secondary-action"
+            label="Download Teti"
+            variant="secondary"
+            href="#download"
+          />
         </div>
       </div>
       <div className="hero-visual" aria-label="Teti network identity">

@@ -137,24 +137,24 @@ img {
 }
 
 .logo-header img {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
 }
 
 .logo-hero img {
-  width: clamp(128px, 18vw, 174px);
-  height: clamp(128px, 18vw, 174px);
+  width: clamp(150px, 19vw, 198px);
+  height: clamp(128px, 16vw, 168px);
   filter: drop-shadow(0 26px 30px rgba(37, 99, 235, 0.22));
 }
 
 .logo-modal img {
-  width: 64px;
-  height: 64px;
+  width: 70px;
+  height: 60px;
 }
 
 .logo-banner img {
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 54px;
 }
 
 .header-nav {
@@ -199,9 +199,23 @@ img {
   overflow-wrap: anywhere;
 }
 
+.hero-copy h1,
+.hero-copy h1 * {
+  color: #0f172a !important;
+}
+
+.hero-copy h1 {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
 .hero-copy p {
   max-width: 560px;
-  color: var(--teti-text-secondary);
+  color: #334155 !important;
+  font-weight: 520;
+}
+
+.hero-copy p * {
+  color: #334155 !important;
 }
 
 .eyebrow {
@@ -211,6 +225,31 @@ img {
 .hero-actions {
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.hero-primary-action,
+.hero-primary-action * {
+  color: #ffffff !important;
+  font-weight: 760 !important;
+}
+
+.hero-secondary-action {
+  color: #1e3a8a !important;
+  font-weight: 720 !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(37, 99, 235, 0.18) !important;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.1) !important;
+}
+
+.hero-secondary-action *,
+.hero-secondary-action:hover * {
+  color: #1e3a8a !important;
+}
+
+.hero-secondary-action:hover {
+  background: #ffffff !important;
+  border-color: rgba(37, 99, 235, 0.32) !important;
+  transform: translateY(-1px);
 }
 
 .hero-visual {
@@ -418,8 +457,8 @@ img {
 }
 
 .teti-avatar .logo-header img {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 28px;
 }
 
 .avatar-status {
@@ -457,16 +496,24 @@ img {
 }
 
 .teti-titleline strong {
+  color: #0f172a;
   font-size: 1rem;
+  font-weight: 760;
 }
 
 .teti-titleline span {
+  color: #334155;
   font-size: 0.86rem;
+  font-weight: 620;
 }
 
 .skill-badges {
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.teti-main p {
+  color: #475569;
 }
 
 .skill-badges [data-slot],
@@ -511,13 +558,47 @@ img {
 
 .teti-side > span {
   max-width: 170px;
+  color: #334155;
   font-size: 0.82rem;
+  font-weight: 560;
   line-height: 1.35;
   text-align: right;
 }
 
 .connect-action {
+  min-width: 108px;
   white-space: nowrap;
+  color: #ffffff !important;
+  font-weight: 760 !important;
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%) !important;
+  border-color: rgba(37, 99, 235, 0.24) !important;
+  box-shadow:
+    0 10px 22px rgba(37, 99, 235, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.connect-action * {
+  color: #ffffff !important;
+}
+
+.connect-action:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, #4f8df8 0%, #1d4ed8 100%) !important;
+  box-shadow:
+    0 14px 28px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.connect-action:disabled,
+.connect-action[aria-disabled="true"] {
+  color: #64748b !important;
+  background: rgba(226, 232, 240, 0.8) !important;
+  box-shadow: none !important;
+}
+
+.connect-action:disabled *,
+.connect-action[aria-disabled="true"] * {
+  color: #64748b !important;
 }
 
 .download-banner {
