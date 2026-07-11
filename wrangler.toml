@@ -1,0 +1,8 @@
+name = "teti-site-api"
+main = "worker/index.ts"
+compatibility_date = "2026-07-11"
+
+[[kv_namespaces]]
+binding = "TETI_REGISTRY"
+id = "replace-with-production-kv-namespace-id"
+preview_id = "replace-with-preview-kv-namespace-id"
