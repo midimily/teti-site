@@ -77,10 +77,17 @@ Connect the GitHub repository to Cloudflare Pages:
 Cloudflare Pages should run `npm install` automatically before the build. Do not
 commit `node_modules`, `dist`, `.env`, or local machine files.
 
+Bind the KV namespace to Pages:
+
+- Variable/binding type: KV namespace
+- Binding name: `TETI_REGISTRY`
+- Namespace: the production Teti registry KV namespace
+
 ## Cloudflare Worker + KV
 
-The static MVP can deploy on Pages by itself. The Worker in `worker/index.ts`
-keeps the future API boundary clear for the Teti registry.
+The Pages Function in `functions/api/[[path]].ts` forwards `/api/*` requests to
+the Worker implementation in `worker/index.ts`, so Cloudflare Pages automatic
+deployments can read `TETI_REGISTRY` directly.
 
 KV binding:
 
@@ -88,5 +95,26 @@ KV binding:
 
 KV keys:
 
-- `teti:list` - JSON array of registry records
+- `teti:{id}` - one JSON registry document per public Teti identity
+- `teti:list` - legacy JSON array fallback, used only when no `teti:{id}` keys exist
 - `desktop:latest` - future desktop release metadata
+
+Example registry key:
+
+- Key: `teti:teti_1pzwnnbt8`
+- Value shape:
+
+```json
+{
+  "version": 1,
+  "id": "teti_1pzwnnbt8",
+  "address": "1pzwnnbt8@mail.seep.im",
+  "publicProfile": {
+    "platform": "macOS",
+    "category": ["developer"],
+    "aiEnvironment": ["Codex"]
+  },
+  "createdAt": "2026-07-12T03:01:49.881Z",
+  "updatedAt": "2026-07-12T03:01:49.881Z"
+}
+```

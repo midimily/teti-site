@@ -18,15 +18,24 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
+    let refreshTimer: number | undefined;
 
-    fetchTetis().then(nextTetis => {
-      if (isMounted) {
-        setTetis(nextTetis);
-      }
-    });
+    const refreshTetis = () => {
+      fetchTetis().then(nextTetis => {
+        if (isMounted) {
+          setTetis(nextTetis);
+        }
+      });
+    };
+
+    refreshTetis();
+    refreshTimer = window.setInterval(refreshTetis, 10000);
 
     return () => {
       isMounted = false;
+      if (refreshTimer) {
+        window.clearInterval(refreshTimer);
+      }
     };
   }, []);
 

@@ -61,7 +61,10 @@ export const seedTetis: TetiRecord[] = [
 
 export async function fetchTetis(): Promise<TetiRecord[]> {
   try {
-    const response = await fetch('/api/tetis');
+    const response = await fetch(`/api/tetis?fresh=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {'cache-control': 'no-cache'},
+    });
     if (!response.ok) {
       return seedTetis;
     }

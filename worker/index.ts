@@ -16,6 +16,21 @@ type TetiRecord = {
   lastSeen: string;
 };
 
+type RegistryTetiDocument = {
+  id?: string;
+  address?: string;
+  publicProfile?: {
+    name?: string;
+    platform?: string;
+    category?: string[];
+    aiEnvironment?: string[];
+    description?: string;
+    capabilities?: string[];
+  };
+  updatedAt?: string;
+  createdAt?: string;
+};
+
 const seedTetis: TetiRecord[] = [
   {
     id: 'mochi',
@@ -67,31 +82,174 @@ const seedTetis: TetiRecord[] = [
 
 const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
-  'cache-control': 'public, max-age=30',
+  'cache-control': 'no-store, no-cache, must-revalidate',
+  pragma: 'no-cache',
+  expires: '0',
   'access-control-allow-origin': '*',
 };
 
-async function getTetis(env: Env): Promise<TetiRecord[]> {
+function toTitle(value: string) {
+  return value
+    .replace(/^teti[_-]?/i, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, match => match.toUpperCase());
+}
+
+function getLastSeen(updatedAt?: string) {
+  if (!updatedAt) {
+    return 'registered';
+  }
+
+  const updatedTime = Date.parse(updatedAt);
+  if (!Number.isFinite(updatedTime)) {
+    return 'registered';
+  }
+
+  const ageMs = Date.now() - updatedTime;
+  if (ageMs < 1000 * 60 * 2) {
+    return 'live';
+  }
+  if (ageMs < 1000 * 60 * 60) {
+    return `${Math.max(1, Math.floor(ageMs / (1000 * 60)))}m ago`;
+  }
+  if (ageMs < 1000 * 60 * 60 * 24) {
+    return `${Math.floor(ageMs / (1000 * 60 * 60))}h ago`;
+  }
+  return `${Math.floor(ageMs / (1000 * 60 * 60 * 24))}d ago`;
+}
+
+function getStatus(updatedAt?: string): TetiStatus {
+  if (!updatedAt) {
+    return 'idle';
+  }
+
+  const updatedTime = Date.parse(updatedAt);
+  if (!Number.isFinite(updatedTime)) {
+    return 'idle';
+  }
+
+  const ageMs = Date.now() - updatedTime;
+  if (ageMs < 1000 * 60 * 10) {
+    return 'online';
+  }
+  if (ageMs < 1000 * 60 * 60 * 24) {
+    return 'thinking';
+  }
+  return 'idle';
+}
+
+function normalizeRegistryDocument(
+  raw: RegistryTetiDocument,
+): TetiRecord | null {
+  if (!raw.id && !raw.address) {
+    return null;
+  }
+
+  const id = raw.id ?? raw.address ?? 'unknown';
+  const addressName = raw.address?.split('@')[0];
+  const profile = raw.publicProfile ?? {};
+  const capabilities = [
+    ...(Array.isArray(profile.category) ? profile.category : []),
+    ...(Array.isArray(profile.aiEnvironment) ? profile.aiEnvironment : []),
+    ...(Array.isArray(profile.capabilities) ? profile.capabilities : []),
+  ]
+    .filter(Boolean)
+    .slice(0, 4);
+  const platform = profile.platform ?? 'Teti network';
+  const displayName = profile.name ?? `Teti ${toTitle(addressName ?? id)}`;
+  const status = getStatus(raw.updatedAt);
+
+  return {
+    id,
+    name: displayName,
+    handle: `@${addressName ?? id.replace(/^teti[_-]?/, '')}`,
+    summary:
+      profile.description ??
+      `${platform} companion identity registered on the open Teti network.`,
+    status,
+    location: platform,
+    capabilities: capabilities.length > 0 ? capabilities : ['companion'],
+    signal:
+      status === 'online'
+        ? 'Ready for a local connection'
+        : 'Available through Teti Desktop',
+    lastSeen: getLastSeen(raw.updatedAt ?? raw.createdAt),
+  };
+}
+
+async function getRegistryTetis(env: Env): Promise<TetiRecord[]> {
+  const registry = env.TETI_REGISTRY;
+  if (!registry) {
+    return [];
+  }
+
+  const records: TetiRecord[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const listed = await registry.list({prefix: 'teti:', cursor});
+    const recordKeys = listed.keys.filter(key => key.name !== 'teti:list');
+    const rawValues = await Promise.all(
+      recordKeys.map(key => registry.get(key.name)),
+    );
+
+    for (const rawValue of rawValues) {
+      if (!rawValue) {
+        continue;
+      }
+
+      try {
+        const parsed = JSON.parse(rawValue) as RegistryTetiDocument;
+        const record = normalizeRegistryDocument(parsed);
+        if (record) {
+          records.push(record);
+        }
+      } catch {
+        // Ignore malformed registry entries so one bad KV value does not hide
+        // the rest of the public network list.
+      }
+    }
+
+    cursor = listed.list_complete ? undefined : listed.cursor;
+  } while (cursor);
+
+  return records.sort((a, b) => {
+    if (a.lastSeen === 'live' && b.lastSeen !== 'live') {
+      return -1;
+    }
+    if (b.lastSeen === 'live' && a.lastSeen !== 'live') {
+      return 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
+
+async function getLegacyTetis(env: Env): Promise<TetiRecord[]> {
   const raw = await env.TETI_REGISTRY?.get('teti:list');
   if (!raw) {
-    return seedTetis;
+    return [];
   }
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : seedTetis;
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return seedTetis;
+    return [];
   }
+}
+
+async function getTetis(env: Env): Promise<TetiRecord[]> {
+  const registryTetis = await getRegistryTetis(env);
+  if (registryTetis.length > 0) {
+    return registryTetis;
+  }
+
+  const legacyTetis = await getLegacyTetis(env);
+  return legacyTetis.length > 0 ? legacyTetis : seedTetis;
 }
 
 function createConnectIntent(teti: TetiRecord) {
   const expiresAt = new Date(Date.now() + 1000 * 60 * 5).toISOString();
-  const intent = {
-    tetiId: teti.id,
-    source: 'teti.bot',
-    expiresAt,
-  };
   return {
     tetiId: teti.id,
     desktopUrl: `teti://connect/${encodeURIComponent(teti.id)}`,
