@@ -422,6 +422,14 @@ img {
   list-style: none;
 }
 
+.teti-list-message {
+  padding: 24px 16px;
+  border: 1px solid var(--teti-border);
+  border-radius: 18px;
+  color: var(--teti-text-secondary);
+  background: var(--teti-surface);
+}
+
 .teti-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) minmax(190px, auto);

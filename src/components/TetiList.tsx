@@ -5,11 +5,19 @@ import type {TetiRecord} from '../lib/tetiData';
 import {TetiRow} from './TetiRow';
 
 type TetiListProps = {
-  tetis: TetiRecord[];
+  tetis: TetiRecord[] | null;
+  isUnavailable: boolean;
   onConnectFallback: (teti: TetiRecord) => void;
 };
 
-export function TetiList({tetis, onConnectFallback}: TetiListProps) {
+export function TetiList({
+  tetis,
+  isUnavailable,
+  onConnectFallback,
+}: TetiListProps) {
+  const isLoading = tetis === null && !isUnavailable;
+  const displayedTetis = tetis ?? [];
+
   return (
     <section className="registry-section" id="registry" aria-labelledby="registry-title">
       <div className="section-heading">
@@ -22,16 +30,33 @@ export function TetiList({tetis, onConnectFallback}: TetiListProps) {
             Teti Desktop.
           </Text>
         </div>
-        <span className="registry-count">{tetis.length} network nodes</span>
+        <span className="registry-count">
+          {isLoading
+            ? 'Loading registry'
+            : isUnavailable
+              ? 'Registry unavailable'
+              : `${displayedTetis.length} network nodes`}
+        </span>
       </div>
-      <ul className="teti-list" role="list">
-        {tetis.map(teti => (
+      <ul className="teti-list" role="list" aria-busy={isLoading}>
+        {isLoading ? (
+          <li className="teti-list-message">Loading active Teti…</li>
+        ) : isUnavailable ? (
+          <li className="teti-list-message">
+            The public registry is temporarily unavailable. Please try again
+            shortly.
+          </li>
+        ) : displayedTetis.length === 0 ? (
+          <li className="teti-list-message">No public Teti are active yet.</li>
+        ) : (
+          displayedTetis.map(teti => (
           <TetiRow
             key={teti.id}
             teti={teti}
             onConnectFallback={onConnectFallback}
           />
-        ))}
+          ))
+        )}
       </ul>
     </section>
   );

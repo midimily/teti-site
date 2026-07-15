@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Theme} from '@astryxdesign/core/theme';
 
 import {DownloadBanner} from './components/DownloadBanner';
@@ -8,13 +8,15 @@ import {Header} from './components/Header';
 import {Hero} from './components/Hero';
 import {Stats} from './components/Stats';
 import {TetiList} from './components/TetiList';
-import {fetchTetis, seedTetis, type TetiRecord} from './lib/tetiData';
+import {fetchTetis, type TetiRecord} from './lib/tetiData';
 import {tetiTheme} from './theme';
 import './styles.css';
 
 export default function App() {
-  const [tetis, setTetis] = useState<TetiRecord[]>(seedTetis);
+  const [tetis, setTetis] = useState<TetiRecord[] | null>(null);
+  const [isRegistryUnavailable, setIsRegistryUnavailable] = useState(false);
   const [downloadTeti, setDownloadTeti] = useState<TetiRecord | null>(null);
+  const hasLoadedRegistry = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -22,8 +24,16 @@ export default function App() {
 
     const refreshTetis = () => {
       fetchTetis().then(nextTetis => {
-        if (isMounted) {
+        if (!isMounted) {
+          return;
+        }
+
+        if (nextTetis) {
           setTetis(nextTetis);
+          hasLoadedRegistry.current = true;
+          setIsRegistryUnavailable(false);
+        } else if (!hasLoadedRegistry.current) {
+          setIsRegistryUnavailable(true);
         }
       });
     };
@@ -47,7 +57,11 @@ export default function App() {
         <main>
           <Hero />
           <Stats tetis={tetis} />
-          <TetiList tetis={tetis} onConnectFallback={setDownloadTeti} />
+          <TetiList
+            tetis={tetis}
+            isUnavailable={isRegistryUnavailable}
+            onConnectFallback={setDownloadTeti}
+          />
           <DownloadBanner />
         </main>
         <Footer />
