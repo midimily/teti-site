@@ -31,6 +31,19 @@ type RegistryTetiDocument = {
   createdAt?: string;
 };
 
+type TetiRegistryMeta = {
+  source: 'registry' | 'legacy' | 'seed';
+  kvBound: boolean;
+  registryKeyCount: number;
+  registryRecordCount: number;
+  legacyListFound: boolean;
+};
+
+type TetiRegistryResult = {
+  tetis: TetiRecord[];
+  meta: TetiRegistryMeta;
+};
+
 const seedTetis: TetiRecord[] = [
   {
     id: 'mochi',
@@ -177,18 +190,22 @@ function normalizeRegistryDocument(
   };
 }
 
-async function getRegistryTetis(env: Env): Promise<TetiRecord[]> {
+async function getRegistryTetis(
+  env: Env,
+): Promise<{records: TetiRecord[]; keyCount: number}> {
   const registry = env.TETI_REGISTRY;
   if (!registry) {
-    return [];
+    return {records: [], keyCount: 0};
   }
 
   const records: TetiRecord[] = [];
+  let keyCount = 0;
   let cursor: string | undefined;
 
   do {
     const listed = await registry.list({prefix: 'teti:', cursor});
     const recordKeys = listed.keys.filter(key => key.name !== 'teti:list');
+    keyCount += recordKeys.length;
     const rawValues = await Promise.all(
       recordKeys.map(key => registry.get(key.name)),
     );
@@ -213,39 +230,76 @@ async function getRegistryTetis(env: Env): Promise<TetiRecord[]> {
     cursor = listed.list_complete ? undefined : listed.cursor;
   } while (cursor);
 
-  return records.sort((a, b) => {
-    if (a.lastSeen === 'live' && b.lastSeen !== 'live') {
-      return -1;
-    }
-    if (b.lastSeen === 'live' && a.lastSeen !== 'live') {
-      return 1;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  return {
+    keyCount,
+    records: records.sort((a, b) => {
+      if (a.lastSeen === 'live' && b.lastSeen !== 'live') {
+        return -1;
+      }
+      if (b.lastSeen === 'live' && a.lastSeen !== 'live') {
+        return 1;
+      }
+      return a.name.localeCompare(b.name);
+    }),
+  };
 }
 
-async function getLegacyTetis(env: Env): Promise<TetiRecord[]> {
+async function getLegacyTetis(
+  env: Env,
+): Promise<{records: TetiRecord[]; found: boolean}> {
   const raw = await env.TETI_REGISTRY?.get('teti:list');
   if (!raw) {
-    return [];
+    return {records: [], found: false};
   }
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return {records: Array.isArray(parsed) ? parsed : [], found: true};
   } catch {
-    return [];
+    return {records: [], found: true};
   }
 }
 
-async function getTetis(env: Env): Promise<TetiRecord[]> {
+async function getTetiRegistry(env: Env): Promise<TetiRegistryResult> {
+  const kvBound = Boolean(env.TETI_REGISTRY);
   const registryTetis = await getRegistryTetis(env);
-  if (registryTetis.length > 0) {
-    return registryTetis;
+  if (registryTetis.records.length > 0) {
+    return {
+      tetis: registryTetis.records,
+      meta: {
+        source: 'registry',
+        kvBound,
+        registryKeyCount: registryTetis.keyCount,
+        registryRecordCount: registryTetis.records.length,
+        legacyListFound: false,
+      },
+    };
   }
 
   const legacyTetis = await getLegacyTetis(env);
-  return legacyTetis.length > 0 ? legacyTetis : seedTetis;
+  if (legacyTetis.records.length > 0) {
+    return {
+      tetis: legacyTetis.records,
+      meta: {
+        source: 'legacy',
+        kvBound,
+        registryKeyCount: registryTetis.keyCount,
+        registryRecordCount: registryTetis.records.length,
+        legacyListFound: legacyTetis.found,
+      },
+    };
+  }
+
+  return {
+    tetis: seedTetis,
+    meta: {
+      source: 'seed',
+      kvBound,
+      registryKeyCount: registryTetis.keyCount,
+      registryRecordCount: registryTetis.records.length,
+      legacyListFound: legacyTetis.found,
+    },
+  };
 }
 
 function createConnectIntent(teti: TetiRecord) {
@@ -280,13 +334,13 @@ export default {
     }
 
     if (url.pathname === '/api/tetis' && request.method === 'GET') {
-      const tetis = await getTetis(env);
-      return response({tetis});
+      const registry = await getTetiRegistry(env);
+      return response(registry);
     }
 
     const tetiMatch = url.pathname.match(/^\/api\/tetis\/([^/]+)$/);
     if (tetiMatch && request.method === 'GET') {
-      const tetis = await getTetis(env);
+      const {tetis} = await getTetiRegistry(env);
       const teti = tetis.find(item => item.id === tetiMatch[1]);
       if (!teti) {
         return response({error: 'Teti not found'}, {status: 404});
@@ -296,7 +350,7 @@ export default {
 
     const connectMatch = url.pathname.match(/^\/api\/tetis\/([^/]+)\/connect$/);
     if (connectMatch && request.method === 'POST') {
-      const tetis = await getTetis(env);
+      const {tetis} = await getTetiRegistry(env);
       const teti = tetis.find(item => item.id === connectMatch[1]);
       if (!teti) {
         return response({error: 'Teti not found'}, {status: 404});
