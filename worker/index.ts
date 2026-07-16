@@ -1,4 +1,5 @@
 export interface Env {
+  TETI_REG?: KVNamespace;
   TETI_REGISTRY?: KVNamespace;
 }
 
@@ -34,6 +35,7 @@ type RegistryTetiDocument = {
 type TetiRegistryMeta = {
   source: 'registry' | 'legacy' | 'seed';
   kvBound: boolean;
+  bindingName: string | null;
   registryKeyCount: number;
   registryRecordCount: number;
   legacyListFound: boolean;
@@ -100,6 +102,37 @@ const jsonHeaders = {
   expires: '0',
   'access-control-allow-origin': '*',
 };
+
+function isKvNamespace(value: unknown): value is KVNamespace {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'get' in value &&
+    'list' in value &&
+    typeof (value as {get?: unknown}).get === 'function' &&
+    typeof (value as {list?: unknown}).list === 'function'
+  );
+}
+
+function getRegistryBinding(env: Env): {
+  binding: KVNamespace | null;
+  bindingName: string | null;
+} {
+  if (isKvNamespace(env.TETI_REGISTRY)) {
+    return {binding: env.TETI_REGISTRY, bindingName: 'TETI_REGISTRY'};
+  }
+  if (isKvNamespace(env.TETI_REG)) {
+    return {binding: env.TETI_REG, bindingName: 'TETI_REG'};
+  }
+
+  for (const [name, value] of Object.entries(env)) {
+    if (isKvNamespace(value)) {
+      return {binding: value, bindingName: name};
+    }
+  }
+
+  return {binding: null, bindingName: null};
+}
 
 function toTitle(value: string) {
   return value
@@ -193,7 +226,7 @@ function normalizeRegistryDocument(
 async function getRegistryTetis(
   env: Env,
 ): Promise<{records: TetiRecord[]; keyCount: number}> {
-  const registry = env.TETI_REGISTRY;
+  const {binding: registry} = getRegistryBinding(env);
   if (!registry) {
     return {records: [], keyCount: 0};
   }
@@ -247,7 +280,8 @@ async function getRegistryTetis(
 async function getLegacyTetis(
   env: Env,
 ): Promise<{records: TetiRecord[]; found: boolean}> {
-  const raw = await env.TETI_REGISTRY?.get('teti:list');
+  const {binding: registry} = getRegistryBinding(env);
+  const raw = await registry?.get('teti:list');
   if (!raw) {
     return {records: [], found: false};
   }
@@ -261,7 +295,8 @@ async function getLegacyTetis(
 }
 
 async function getTetiRegistry(env: Env): Promise<TetiRegistryResult> {
-  const kvBound = Boolean(env.TETI_REGISTRY);
+  const {binding: registry, bindingName} = getRegistryBinding(env);
+  const kvBound = Boolean(registry);
   const registryTetis = await getRegistryTetis(env);
   if (registryTetis.records.length > 0) {
     return {
@@ -269,6 +304,7 @@ async function getTetiRegistry(env: Env): Promise<TetiRegistryResult> {
       meta: {
         source: 'registry',
         kvBound,
+        bindingName,
         registryKeyCount: registryTetis.keyCount,
         registryRecordCount: registryTetis.records.length,
         legacyListFound: false,
@@ -283,6 +319,7 @@ async function getTetiRegistry(env: Env): Promise<TetiRegistryResult> {
       meta: {
         source: 'legacy',
         kvBound,
+        bindingName,
         registryKeyCount: registryTetis.keyCount,
         registryRecordCount: registryTetis.records.length,
         legacyListFound: legacyTetis.found,
@@ -295,6 +332,7 @@ async function getTetiRegistry(env: Env): Promise<TetiRegistryResult> {
     meta: {
       source: 'seed',
       kvBound,
+      bindingName,
       registryKeyCount: registryTetis.keyCount,
       registryRecordCount: registryTetis.records.length,
       legacyListFound: legacyTetis.found,

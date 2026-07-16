@@ -80,8 +80,8 @@ commit `node_modules`, `dist`, `.env`, or local machine files.
 Bind the KV namespace to Pages:
 
 - Variable/binding type: KV namespace
-- Binding name: `TETI_REGISTRY`
-- Namespace: the production Teti registry KV namespace
+- Binding name: `TETI_REG` or `TETI_REGISTRY`
+- Namespace: the production Teti registry KV namespace, currently named `TETI_REGISTRY`
 
 ## Cloudflare Worker + KV
 
@@ -91,7 +91,7 @@ deployments can read `TETI_REGISTRY` directly.
 
 KV binding:
 
-- Binding name: `TETI_REGISTRY`
+- Binding name: `TETI_REG` or `TETI_REGISTRY`
 
 KV keys:
 
