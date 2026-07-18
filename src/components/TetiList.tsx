@@ -26,8 +26,8 @@ export function TetiList({
             Recently Active Teti
           </Heading>
           <Text type="supporting" color="secondary">
-            A public registry of companion identities that can hand off into
-            Teti Desktop.
+            Companion identities active in the last few minutes, ready to hand
+            off into Teti Desktop.
           </Text>
         </div>
         <span className="registry-count">

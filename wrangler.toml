@@ -1,8 +1,11 @@
-name = "teti-site-api"
+name = "teti-registry"
 main = "worker/index.ts"
 compatibility_date = "2026-07-11"
+account_id = "f83d1ab694e43050f32ca6ac2a194943"
+
+[triggers]
+crons = ["*/5 * * * *"]
 
 [[kv_namespaces]]
-binding = "TETI_REGISTRY"
-id = "replace-with-production-kv-namespace-id"
-preview_id = "replace-with-preview-kv-namespace-id"
+binding = "TETI"
+id = "fcdde2c34e5544e2a4367f9050afa77a"

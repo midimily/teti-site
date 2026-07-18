@@ -59,6 +59,12 @@ npm run worker:dev
 API routes:
 
 - `GET /api/tetis`
+- `GET /api/tetis?page=n`
+- `GET /api/stats`
+- `GET /api/health`
+- `POST /api/register`
+- `POST /api/heartbeat`
+- `POST /api/admin/rebuild-index` (requires `ADMIN_TOKEN`)
 - `GET /api/tetis/:id`
 - `POST /api/tetis/:id/connect`
 - `GET /api/desktop`
@@ -87,17 +93,26 @@ Bind the KV namespace to Pages:
 
 The Pages Function in `functions/api/[[path]].ts` forwards `/api/*` requests to
 the Worker implementation in `worker/index.ts`, so Cloudflare Pages automatic
-deployments can read `TETI_REGISTRY` directly.
+deployments can read `TETI_REG` or `TETI_REGISTRY` directly.
 
 KV binding:
 
-- Binding name: `TETI_REG` or `TETI_REGISTRY`
+- Worker binding name: `TETI`
+- Pages binding name: `TETI_REG` (the API also accepts `TETI_REGISTRY`)
 
 KV keys:
 
 - `teti:{id}` - one JSON registry document per public Teti identity
-- `teti:list` - legacy JSON array fallback, used only when no `teti:{id}` keys exist
+- `registry:active` - cached public active snapshot
+- `registry:recent` - recent registrations
+- `registry:stats` - public aggregate counts
+- `registry:index:page:n` - paginated registry index
+- `registry:active:bucket:00` through `registry:active:bucket:31` - sharded heartbeat state
 - `desktop:latest` - future desktop release metadata
+
+See [the beta registry plan](docs/registry-beta-plan.md) for the aggregate,
+heartbeat, and authenticated rebuild design. Set `ADMIN_TOKEN` as a Worker and
+Pages secret before using the rebuild endpoint.
 
 Example registry key:
 

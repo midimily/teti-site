@@ -1,34 +1,19 @@
-import {useMemo} from 'react';
+import type {RegistryStats} from '../lib/tetiData';
 
-import type {TetiRecord} from '../lib/tetiData';
-
-export function Stats({tetis}: {tetis: TetiRecord[] | null}) {
-  const stats = useMemo(
-    () => [
-      {
-        label: 'Teti Alive',
-        value: tetis
-          ? tetis.filter(teti => teti.status !== 'offline').length.toString()
-          : '—',
-      },
-      {label: 'Total Born', value: tetis ? tetis.length.toString() : '—'},
-      {
-        label: 'Connections',
-        value: tetis
-          ? tetis.filter(teti => teti.status === 'online').length.toString()
-          : '—',
-      },
-    ],
-    [tetis],
-  );
+export function Stats({stats}: {stats: RegistryStats | null}) {
+  const values = [
+    {label: 'Recently Active', value: stats ? stats.activeCount.toString() : '—'},
+    {label: 'Total Registered', value: stats?.registryCount !== null && stats?.registryCount !== undefined ? stats.registryCount.toString() : '—'},
+    {label: 'Recent Index', value: stats?.recentCount !== null && stats?.recentCount !== undefined ? stats.recentCount.toString() : '—'},
+  ];
 
   return (
     <section
       className="network-stats"
       aria-label="Teti network state"
-      aria-busy={tetis === null}
+      aria-busy={stats === null}
     >
-      {stats.map(stat => (
+      {values.map(stat => (
         <div className="network-stat" key={stat.label}>
           <strong>{stat.value}</strong>
           <span>{stat.label}</span>

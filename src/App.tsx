@@ -8,12 +8,13 @@ import {Header} from './components/Header';
 import {Hero} from './components/Hero';
 import {Stats} from './components/Stats';
 import {TetiList} from './components/TetiList';
-import {fetchTetis, type TetiRecord} from './lib/tetiData';
+import {fetchStats, fetchTetis, type RegistryStats, type TetiRecord} from './lib/tetiData';
 import {tetiTheme} from './theme';
 import './styles.css';
 
 export default function App() {
   const [tetis, setTetis] = useState<TetiRecord[] | null>(null);
+  const [stats, setStats] = useState<RegistryStats | null>(null);
   const [isRegistryUnavailable, setIsRegistryUnavailable] = useState(false);
   const [downloadTeti, setDownloadTeti] = useState<TetiRecord | null>(null);
   const hasLoadedRegistry = useRef(false);
@@ -22,8 +23,8 @@ export default function App() {
     let isMounted = true;
     let refreshTimer: number | undefined;
 
-    const refreshTetis = () => {
-      fetchTetis().then(nextTetis => {
+    const refreshRegistry = () => {
+      void Promise.all([fetchTetis(), fetchStats()]).then(([nextTetis, nextStats]) => {
         if (!isMounted) {
           return;
         }
@@ -35,11 +36,14 @@ export default function App() {
         } else if (!hasLoadedRegistry.current) {
           setIsRegistryUnavailable(true);
         }
+        if (nextStats) {
+          setStats(nextStats);
+        }
       });
     };
 
-    refreshTetis();
-    refreshTimer = window.setInterval(refreshTetis, 10000);
+    refreshRegistry();
+    refreshTimer = window.setInterval(refreshRegistry, 90000);
 
     return () => {
       isMounted = false;
@@ -56,7 +60,7 @@ export default function App() {
         <Header />
         <main>
           <Hero />
-          <Stats tetis={tetis} />
+          <Stats stats={stats} />
           <TetiList
             tetis={tetis}
             isUnavailable={isRegistryUnavailable}

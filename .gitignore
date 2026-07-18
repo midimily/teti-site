@@ -4,5 +4,6 @@ dist/
 .env.*
 .DS_Store
 *.tsbuildinfo
+.registry-beta-build/
 vite.config.js
 vite.config.d.ts
