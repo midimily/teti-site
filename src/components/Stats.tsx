@@ -1,22 +1,20 @@
-import type {RegistryStats} from '../lib/tetiData';
+import {useI18n} from '../i18n';
+import type {NetworkSnapshot} from '../lib/tetiData';
 
-export function Stats({stats}: {stats: RegistryStats | null}) {
-  const values = [
-    {label: 'Recently Active', value: stats ? stats.activeCount.toString() : '—'},
-    {label: 'Total Registered', value: stats?.registryCount !== null && stats?.registryCount !== undefined ? stats.registryCount.toString() : '—'},
-    {label: 'Recent Index', value: stats?.recentCount !== null && stats?.recentCount !== undefined ? stats.recentCount.toString() : '—'},
+export function Stats({stats}: {stats: NetworkSnapshot['stats'] | null}) {
+  const {formatNumber, t} = useI18n();
+  const entries = [
+    {label: t('stats.total'), value: stats?.totalTetis},
+    {label: t('stats.public'), value: stats?.publicTetis},
+    {label: t('stats.available'), value: stats?.availableNow},
   ];
 
   return (
-    <section
-      className="network-stats"
-      aria-label="Teti network state"
-      aria-busy={stats === null}
-    >
-      {values.map(stat => (
-        <div className="network-stat" key={stat.label}>
-          <strong>{stat.value}</strong>
-          <span>{stat.label}</span>
+    <section className="network-stats" aria-label="Teti Network" aria-busy={stats === null}>
+      {entries.map(entry => (
+        <div className="network-stat" key={entry.label}>
+          <strong>{entry.value === undefined ? '—' : formatNumber(entry.value)}</strong>
+          <span>{entry.label}</span>
         </div>
       ))}
     </section>

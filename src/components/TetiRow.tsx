@@ -1,42 +1,32 @@
-import {Badge} from '@astryxdesign/core/Badge';
-import {Text} from '@astryxdesign/core/Text';
-
-import type {TetiRecord} from '../lib/tetiData';
+import {useI18n} from '../i18n';
+import type {TetiIdentity} from '../lib/tetiData';
+import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
 import {ConnectButton} from './ConnectButton';
 import {Logo} from './Logo';
 import {StatusIndicator} from './StatusIndicator';
 
 type TetiRowProps = {
-  teti: TetiRecord;
-  onConnectFallback: (teti: TetiRecord) => void;
+  identity: TetiIdentity;
+  onConnectFallback: (identity: TetiIdentity, reason: ConnectionFallbackReason) => void;
 };
 
-export function TetiRow({teti, onConnectFallback}: TetiRowProps) {
+export function TetiRow({identity, onConnectFallback}: TetiRowProps) {
+  const {t} = useI18n();
+
   return (
     <li className="teti-row">
       <div className="teti-avatar" aria-hidden="true">
         <Logo size="header" />
-        <span className={`avatar-status avatar-status-${teti.status}`} />
       </div>
       <div className="teti-main">
         <div className="teti-titleline">
-          <strong>{teti.name}</strong>
-          <span>{teti.handle}</span>
-          <StatusIndicator status={teti.status} />
+          <strong>{identity.displayName ?? t('identity.unnamed')}</strong>
+          <StatusIndicator presence={identity.presence} />
         </div>
-        <Text type="supporting" color="secondary">
-          {teti.summary}
-        </Text>
-        <div className="skill-badges" aria-label={`${teti.name} skills`}>
-          {teti.capabilities.map(capability => (
-            <Badge key={capability} label={capability} variant="neutral" />
-          ))}
-        </div>
+        <code>{identity.id}</code>
+        <p>{identity.summary ?? t('identity.noSummary')}</p>
       </div>
-      <div className="teti-side">
-        <span>{teti.signal}</span>
-        <ConnectButton teti={teti} onFallback={onConnectFallback} />
-      </div>
+      <ConnectButton identity={identity} onFallback={onConnectFallback} />
     </li>
   );
 }

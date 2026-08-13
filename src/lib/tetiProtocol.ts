@@ -1,17 +1,25 @@
+export type ConnectionFallbackReason = 'app-not-opened' | 'mobile';
+
 type RequestTetiConnectionOptions = {
   onOpening?: () => void;
-  onFallback?: () => void;
-  onFocusReturn?: () => void;
+  onFallback?: (reason: ConnectionFallbackReason) => void;
+  onHandedOff?: () => void;
   fallbackDelayMs?: number;
 };
 
 export const downloadLinks = {
-  macos: '/downloads/teti-desktop-mac.dmg',
-  windows: '/downloads/teti-desktop-windows.exe',
+  macos: 'https://github.com/midimily/teti-bot/releases',
 };
 
 export function getTetiConnectUrl(tetiId: string) {
   return `teti://connect/${encodeURIComponent(tetiId)}`;
+}
+
+export function isLikelyMobileDevice() {
+  return (
+    window.matchMedia('(pointer: coarse)').matches &&
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  );
 }
 
 export function requestTetiConnection(
@@ -19,32 +27,36 @@ export function requestTetiConnection(
   {
     onOpening,
     onFallback,
-    onFocusReturn,
+    onHandedOff,
     fallbackDelayMs = 1600,
   }: RequestTetiConnectionOptions = {},
 ) {
-  onOpening?.();
-
-  let completed = false;
-  let fallbackTimer = window.setTimeout(() => {
-    completed = true;
-    window.removeEventListener('focus', handleFocusReturn);
-    onFallback?.();
-  }, fallbackDelayMs);
-
-  function handleFocusReturn() {
-    if (completed) {
-      return;
-    }
-    completed = true;
-    window.clearTimeout(fallbackTimer);
-    onFocusReturn?.();
+  if (isLikelyMobileDevice()) {
+    onFallback?.('mobile');
+    return () => {};
   }
 
-  window.addEventListener('focus', handleFocusReturn, {once: true});
+  onOpening?.();
+  let settled = false;
 
-  // Browser custom-protocol support is intentionally best-effort: sites cannot
-  // reliably know whether a native app handled `teti://`, so we attempt the
-  // handoff and show the desktop download path only if focus does not return.
-  window.location.href = getTetiConnectUrl(tetiId);
+  const finish = (kind: 'fallback' | 'handoff') => {
+    if (settled) return;
+    settled = true;
+    window.clearTimeout(fallbackTimer);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if (kind === 'handoff') onHandedOff?.();
+    else onFallback?.('app-not-opened');
+  };
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') finish('handoff');
+  };
+  const fallbackTimer = window.setTimeout(() => finish('fallback'), fallbackDelayMs);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.location.assign(getTetiConnectUrl(tetiId));
+
+  return () => {
+    settled = true;
+    window.clearTimeout(fallbackTimer);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
 }

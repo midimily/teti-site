@@ -1,15 +1,18 @@
 {
   "name": "teti-site",
-  "version": "0.1.0",
+  "version": "1.0.0-beta.1",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test tests/*.test.ts",
+    "build": "npm run typecheck && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "worker:dev": "wrangler dev worker/index.ts",
-    "worker:deploy": "wrangler deploy worker/index.ts",
-    "registry:smoke": "tsc --target ES2022 --module NodeNext --moduleResolution NodeNext --types @cloudflare/workers-types --skipLibCheck --outDir .registry-beta-build worker/index.ts && node scripts/registry-beta-smoke.mjs"
+    "pages:dev": "npm run build && wrangler pages dev dist --port 4173 --compatibility-date=2026-08-13 --binding TETI_NETWORK_ORIGIN=http://127.0.0.1:8788"
   },
   "dependencies": {
     "@astryxdesign/core": "0.1.4",
@@ -20,10 +23,10 @@
     "vite": "^6.0.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250711.0",
+    "@cloudflare/workers-types": "^5.20260813.1",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "typescript": "^5.7.2",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.122.0"
   }
 }

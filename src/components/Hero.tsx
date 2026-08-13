@@ -2,53 +2,56 @@ import {Button} from '@astryxdesign/core/Button';
 import {Heading} from '@astryxdesign/core/Heading';
 import {StatusDot} from '@astryxdesign/core/StatusDot';
 import {Text} from '@astryxdesign/core/Text';
+import {ArrowDown, Download} from 'lucide-react';
 
+import {useI18n} from '../i18n';
+import {downloadLinks} from '../lib/tetiProtocol';
 import {Logo} from './Logo';
 
 export function Hero() {
+  const {t} = useI18n();
+
   return (
-    <section className="hero" id="about" aria-labelledby="hero-title">
+    <section className="hero" aria-labelledby="hero-title">
       <div className="hero-copy">
         <div className="eyebrow">
-          <StatusDot variant="accent" label="Network signal" isPulsing />
-          <Text type="label" color="accent">
-            An open AI companion network
-          </Text>
+          <StatusDot variant="accent" label={t('hero.eyebrow')} />
+          <span>{t('hero.eyebrow')}</span>
         </div>
         <Heading level={1} type="display-1" textWrap="balance" id="hero-title">
-          The living network of AI companions
+          {t('hero.title')}
         </Heading>
         <Text type="large" color="secondary">
-          Discover unique AI companions. Connect with Teti from your own
-          device.
+          {t('hero.description')}
         </Text>
         <div className="hero-actions">
           <Button
-            className="hero-primary-action"
-            label="Explore"
+            className="primary-action"
+            label={t('hero.explore')}
             variant="primary"
-            href="#registry"
+            href="#network"
+            endContent={<ArrowDown size={16} aria-hidden="true" />}
           />
           <Button
-            className="hero-secondary-action"
-            label="Download Teti"
+            label={t('hero.download')}
             variant="secondary"
-            href="#download"
+            href={downloadLinks.macos}
+            target="_blank"
+            rel="noreferrer"
+            icon={<Download size={16} aria-hidden="true" />}
           />
         </div>
       </div>
-      <div className="hero-visual" aria-label="Teti network identity">
-        <div className="orbit-field" aria-hidden="true">
-          <span className="orbit-dot dot-one" />
-          <span className="orbit-dot dot-two" />
-          <span className="orbit-dot dot-three" />
-        </div>
-        <div className="hero-logo-shell">
+      <div className="hero-visual" aria-label={t('hero.visualLabel')}>
+        <div className="hero-identity-mark">
           <Logo size="hero" />
         </div>
-        <div className="node-caption">
-          <span>teti://network</span>
-          <span>desktop handoff ready</span>
+        <div className="hero-node-meta">
+          <span>{t('hero.localNode')}</span>
+          <span className="node-ready">
+            <StatusDot variant="accent" label={t('hero.networkReady')} />
+            {t('hero.networkReady')}
+          </span>
         </div>
       </div>
     </section>

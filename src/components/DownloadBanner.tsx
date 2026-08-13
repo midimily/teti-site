@@ -1,24 +1,34 @@
 import {Button} from '@astryxdesign/core/Button';
 import {Heading} from '@astryxdesign/core/Heading';
-import {Text} from '@astryxdesign/core/Text';
+import {ArrowUpRight} from 'lucide-react';
 
+import {useI18n} from '../i18n';
 import {downloadLinks} from '../lib/tetiProtocol';
 import {Logo} from './Logo';
 
 export function DownloadBanner() {
+  const {t} = useI18n();
+
   return (
-    <section className="download-banner" id="download" aria-labelledby="download-title">
-      <Logo size="banner" />
+    <section className="download-section" id="download" aria-labelledby="download-title">
+      <div className="download-mark" aria-hidden="true"><Logo size="banner" /></div>
       <div className="download-copy">
+        <span className="section-eyebrow">{t('download.eyebrow')}</span>
         <Heading level={2} type="display-3" id="download-title">
-          Bring Teti to your desktop
+          {t('download.title')}
         </Heading>
-        <Text type="supporting" color="secondary">
-          Connect with Teti from your own device. Private, personal and always
-          yours.
-        </Text>
+        <p>{t('download.description')}</p>
+        <span className="download-requirement">{t('download.requirement')}</span>
       </div>
-      <Button label="Download Teti" variant="primary" href={downloadLinks.macos} />
+      <Button
+        className="primary-action"
+        label={t('download.action')}
+        variant="primary"
+        href={downloadLinks.macos}
+        target="_blank"
+        rel="noreferrer"
+        endContent={<ArrowUpRight size={16} aria-hidden="true" />}
+      />
     </section>
   );
 }

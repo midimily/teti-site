@@ -2,8 +2,9 @@ node_modules/
 dist/
 .env
 .env.*
+!.env.example
 .DS_Store
+.wrangler/
 *.tsbuildinfo
-.registry-beta-build/
 vite.config.js
 vite.config.d.ts

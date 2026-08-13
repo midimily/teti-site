@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Theme} from '@astryxdesign/core/theme';
 
 import {DownloadBanner} from './components/DownloadBanner';
@@ -6,71 +6,97 @@ import {DownloadModal} from './components/DownloadModal';
 import {Footer} from './components/Footer';
 import {Header} from './components/Header';
 import {Hero} from './components/Hero';
+import {IdentityIntro} from './components/IdentityIntro';
 import {Stats} from './components/Stats';
 import {TetiList} from './components/TetiList';
-import {fetchStats, fetchTetis, type RegistryStats, type TetiRecord} from './lib/tetiData';
+import {fetchNetworkSnapshot, type NetworkSnapshot, type TetiIdentity} from './lib/tetiData';
+import type {ConnectionFallbackReason} from './lib/tetiProtocol';
 import {tetiTheme} from './theme';
-import './styles.css';
+
+type NetworkState = 'loading' | 'ready' | 'stale' | 'unavailable';
+type ConnectFallback = {identity: TetiIdentity; reason: ConnectionFallbackReason} | null;
 
 export default function App() {
-  const [tetis, setTetis] = useState<TetiRecord[] | null>(null);
-  const [stats, setStats] = useState<RegistryStats | null>(null);
-  const [isRegistryUnavailable, setIsRegistryUnavailable] = useState(false);
-  const [downloadTeti, setDownloadTeti] = useState<TetiRecord | null>(null);
-  const hasLoadedRegistry = useRef(false);
+  const [snapshot, setSnapshot] = useState<NetworkSnapshot | null>(null);
+  const [networkState, setNetworkState] = useState<NetworkState>('loading');
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [connectFallback, setConnectFallback] = useState<ConnectFallback>(null);
+  const hasLoaded = useRef(false);
+
+  const refresh = useCallback(() => setRefreshToken(value => value + 1), []);
 
   useEffect(() => {
     let isMounted = true;
-    let refreshTimer: number | undefined;
+    let activeController: AbortController | null = null;
 
-    const refreshRegistry = () => {
-      void Promise.all([fetchTetis(), fetchStats()]).then(([nextTetis, nextStats]) => {
-        if (!isMounted) {
-          return;
-        }
-
-        if (nextTetis) {
-          setTetis(nextTetis);
-          hasLoadedRegistry.current = true;
-          setIsRegistryUnavailable(false);
-        } else if (!hasLoadedRegistry.current) {
-          setIsRegistryUnavailable(true);
-        }
-        if (nextStats) {
-          setStats(nextStats);
-        }
-      });
-    };
-
-    refreshRegistry();
-    refreshTimer = window.setInterval(refreshRegistry, 90000);
-
-    return () => {
-      isMounted = false;
-      if (refreshTimer) {
-        window.clearInterval(refreshTimer);
+    const load = async () => {
+      activeController?.abort();
+      activeController = new AbortController();
+      try {
+        const nextSnapshot = await fetchNetworkSnapshot({signal: activeController.signal});
+        if (!isMounted) return;
+        setSnapshot(nextSnapshot);
+        setNetworkState('ready');
+        hasLoaded.current = true;
+      } catch (error) {
+        if (!isMounted || activeController.signal.aborted) return;
+        setNetworkState(hasLoaded.current ? 'stale' : 'unavailable');
       }
     };
-  }, []);
+
+    void load();
+    const timer = window.setInterval(load, 10000);
+    return () => {
+      isMounted = false;
+      activeController?.abort();
+      window.clearInterval(timer);
+    };
+  }, [refreshToken]);
+
+  const loadMore = async () => {
+    const cursor = snapshot?.page.nextCursor;
+    if (!cursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const next = await fetchNetworkSnapshot({cursor});
+      setSnapshot(current => {
+        if (!current) return next;
+        const identities = new Map(current.identities.map(identity => [identity.id, identity]));
+        next.identities.forEach(identity => identities.set(identity.id, identity));
+        return {...next, identities: [...identities.values()]};
+      });
+      setNetworkState('ready');
+    } catch {
+      setNetworkState(snapshot ? 'stale' : 'unavailable');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   return (
     <Theme theme={tetiTheme}>
-      <div className="page-glow" aria-hidden="true" />
       <div className="app-shell" id="top">
         <Header />
         <main>
           <Hero />
-          <Stats stats={stats} />
+          <Stats stats={snapshot?.stats ?? null} />
+          <IdentityIntro />
           <TetiList
-            tetis={tetis}
-            isUnavailable={isRegistryUnavailable}
-            onConnectFallback={setDownloadTeti}
+            identities={snapshot?.identities ?? null}
+            page={snapshot?.page ?? null}
+            publicCount={snapshot?.stats.publicTetis ?? null}
+            state={networkState}
+            isLoadingMore={isLoadingMore}
+            onRetry={refresh}
+            onLoadMore={() => void loadMore()}
+            onConnectFallback={(identity, reason) => setConnectFallback({identity, reason})}
           />
           <DownloadBanner />
         </main>
         <Footer />
       </div>
-      <DownloadModal teti={downloadTeti} onClose={() => setDownloadTeti(null)} />
+      <DownloadModal fallback={connectFallback} onClose={() => setConnectFallback(null)} />
     </Theme>
   );
 }

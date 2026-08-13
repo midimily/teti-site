@@ -160,6 +160,11 @@ Astryx 提供 `--shadow-low`、`--shadow-med`、`--shadow-high` 与 inset select
 
 ## 4. 推荐技术架构
 
+> Beta 1.0 update: the original Worker/KV Registry proposal below is superseded. The current
+> production boundary is Cloudflare Pages + a same-origin Pages Function BFF consuming the
+> allowlisted Teti Network v0.1.9 Public Surface at `https://network.teti.bot`. The site maintains
+> no Registry database or Workers KV data.
+
 推荐：React + Vite + TypeScript + Astryx + Cloudflare Pages + Worker API + KV。
 
 原因：

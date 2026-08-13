@@ -1,36 +1,48 @@
-import {useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
+import {ArrowUpRight} from 'lucide-react';
 
-import type {TetiRecord} from '../lib/tetiData';
-import {requestTetiConnection} from '../lib/tetiProtocol';
+import {useI18n} from '../i18n';
+import type {TetiIdentity} from '../lib/tetiData';
+import {requestTetiConnection, type ConnectionFallbackReason} from '../lib/tetiProtocol';
 
 type ConnectButtonProps = {
-  teti: TetiRecord;
-  onFallback: (teti: TetiRecord) => void;
+  identity: TetiIdentity;
+  onFallback: (identity: TetiIdentity, reason: ConnectionFallbackReason) => void;
 };
 
-export function ConnectButton({teti, onFallback}: ConnectButtonProps) {
+export function ConnectButton({identity, onFallback}: ConnectButtonProps) {
+  const {t} = useI18n();
   const [isOpening, setIsOpening] = useState(false);
-  const isDisabled = teti.status === 'offline';
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const isDisabled = identity.presence === 'unavailable';
+
+  useEffect(() => () => cleanupRef.current?.(), []);
 
   return (
     <Button
       className="connect-action"
-      label={isOpening ? 'Opening Teti...' : 'Connect'}
+      label={
+        isDisabled
+          ? t('connect.unavailable')
+          : isOpening
+            ? t('connect.opening')
+            : t('connect.action')
+      }
       variant={isDisabled ? 'secondary' : 'primary'}
       size="sm"
-      isDisabled={isDisabled}
+      isDisabled={isDisabled || isOpening}
+      endContent={!isDisabled && !isOpening ? <ArrowUpRight size={15} aria-hidden="true" /> : null}
       onClick={() => {
-        if (isDisabled) {
-          return;
-        }
-        requestTetiConnection(teti.id, {
+        if (isDisabled || isOpening) return;
+        cleanupRef.current?.();
+        cleanupRef.current = requestTetiConnection(identity.id, {
           onOpening: () => setIsOpening(true),
-          onFallback: () => {
+          onFallback: reason => {
             setIsOpening(false);
-            onFallback(teti);
+            onFallback(identity, reason);
           },
-          onFocusReturn: () => setIsOpening(false),
+          onHandedOff: () => setIsOpening(false),
         });
       }}
     />

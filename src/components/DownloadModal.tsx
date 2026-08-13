@@ -1,20 +1,42 @@
+import {useEffect, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Heading} from '@astryxdesign/core/Heading';
-import {Text} from '@astryxdesign/core/Text';
+import {Check, Copy, X} from 'lucide-react';
 
-import type {TetiRecord} from '../lib/tetiData';
-import {downloadLinks} from '../lib/tetiProtocol';
-import {Logo} from './Logo';
+import {useI18n} from '../i18n';
+import type {TetiIdentity} from '../lib/tetiData';
+import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
 
 type DownloadModalProps = {
-  teti: TetiRecord | null;
+  fallback: {identity: TetiIdentity; reason: ConnectionFallbackReason} | null;
   onClose: () => void;
 };
 
-export function DownloadModal({teti, onClose}: DownloadModalProps) {
-  if (!teti) {
-    return null;
-  }
+export function DownloadModal({fallback, onClose}: DownloadModalProps) {
+  const {t} = useI18n();
+  const [copied, setCopied] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!fallback) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const appShell = document.querySelector<HTMLElement>('.app-shell');
+    appShell?.setAttribute('inert', '');
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      appShell?.removeAttribute('inert');
+      previousFocus?.focus();
+      setCopied(false);
+    };
+  }, [fallback, onClose]);
+
+  if (!fallback) return null;
+  const isMobile = fallback.reason === 'mobile';
 
   return (
     <div className="modal-layer" role="presentation" onMouseDown={onClose}>
@@ -22,31 +44,37 @@ export function DownloadModal({teti, onClose}: DownloadModalProps) {
         className="download-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="download-modal-title"
+        aria-labelledby="connect-modal-title"
         onMouseDown={event => event.stopPropagation()}
       >
-        <button className="modal-close" type="button" onClick={onClose}>
-          <span aria-hidden="true">×</span>
-          <span className="sr-only">Close download dialog</span>
+        <button
+          ref={closeRef}
+          className="icon-button modal-close"
+          type="button"
+          aria-label={t('connect.close')}
+          onClick={onClose}
+        >
+          <X size={18} aria-hidden="true" />
         </button>
-        <Logo size="modal" />
-        <Heading level={2} type="display-3" id="download-modal-title">
-          Bring Teti to your desktop
+        <span className="modal-kicker">{fallback.identity.id}</span>
+        <Heading level={2} type="display-3" id="connect-modal-title">
+          {t(isMobile ? 'connect.mobileTitle' : 'connect.fallbackTitle')}
         </Heading>
-        <Text type="supporting" color="secondary">
-          Install Teti desktop app to connect with AI companions.
-        </Text>
+        <p>{t(isMobile ? 'connect.mobileBody' : 'connect.fallbackBody')}</p>
         <div className="modal-actions">
-          <Button label="Download macOS" variant="primary" href={downloadLinks.macos} />
           <Button
-            label="Download Windows"
-            variant="secondary"
-            href={downloadLinks.windows}
+            label={copied ? t('connect.copied') : t('connect.copyId')}
+            variant="primary"
+            icon={copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+            onClick={() => {
+              void navigator.clipboard
+                .writeText(fallback.identity.id)
+                .then(() => setCopied(true))
+                .catch(() => setCopied(false));
+            }}
           />
+          <Button label={t('connect.close')} variant="secondary" onClick={onClose} />
         </div>
-        <button className="maybe-later" type="button" onClick={onClose}>
-          Maybe later
-        </button>
       </section>
     </div>
   );

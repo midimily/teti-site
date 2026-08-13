@@ -1,54 +1,84 @@
-export type TetiStatus = 'online' | 'thinking' | 'idle' | 'offline';
+export type TetiPresence = 'available' | 'unavailable';
 
-export type TetiRecord = {
+export type TetiIdentity = {
   id: string;
-  name: string;
-  handle: string;
-  summary: string;
-  status: TetiStatus;
-  location: string;
-  capabilities: string[];
-  signal: string;
-  lastSeen: string;
+  displayName: string | null;
+  summary: string | null;
+  presence: TetiPresence;
 };
 
-export type RegistryStats = {
-  registryCount: number | null;
-  activeCount: number;
-  recentCount: number | null;
+export type NetworkSnapshot = {
+  identities: TetiIdentity[];
+  page: {
+    limit: number;
+    returnedCount: number;
+    nextCursor: string | null;
+  };
+  stats: {
+    totalTetis: number;
+    publicTetis: number;
+    availableNow: number;
+    generatedAt: string;
+  };
 };
 
-export async function fetchTetis(): Promise<TetiRecord[] | null> {
-  try {
-    const response = await fetch('/api/tetis');
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as {tetis?: TetiRecord[]};
-    return Array.isArray(data.tetis) ? data.tetis : null;
-  } catch {
-    return null;
+export class SiteApiError extends Error {
+  public constructor(
+    public readonly code: string,
+    public readonly status: number,
+  ) {
+    super(`Teti site API failed: ${code}`);
+    this.name = 'SiteApiError';
   }
 }
 
-export async function fetchStats(): Promise<RegistryStats | null> {
+export async function fetchNetworkSnapshot(
+  input: {cursor?: string; signal?: AbortSignal} = {},
+): Promise<NetworkSnapshot> {
+  const query = new URLSearchParams({limit: '50'});
+  if (input.cursor) query.set('cursor', input.cursor);
+  return requestJson(`/api/network?${query.toString()}`, input.signal) as Promise<NetworkSnapshot>;
+}
+
+export async function fetchTetiIdentity(
+  tetiId: string,
+  signal?: AbortSignal,
+): Promise<TetiIdentity> {
+  const response = (await requestJson(
+    `/api/network/identities/${encodeURIComponent(tetiId)}`,
+    signal,
+  )) as {identity: TetiIdentity};
+  return response.identity;
+}
+
+async function requestJson(path: string, signal?: AbortSignal): Promise<unknown> {
+  let response: Response;
   try {
-    const response = await fetch('/api/stats');
-    if (!response.ok) {
-      return null;
-    }
-    const data = (await response.json()) as Partial<RegistryStats>;
-    return (typeof data.registryCount === 'number' || data.registryCount === null) &&
-      typeof data.activeCount === 'number' &&
-      (typeof data.recentCount === 'number' || data.recentCount === null)
-      ? {
-          registryCount: data.registryCount,
-          activeCount: data.activeCount,
-          recentCount: data.recentCount,
-        }
-      : null;
-  } catch {
-    return null;
+    response = await fetch(path, {
+      headers: {accept: 'application/json'},
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new SiteApiError('NETWORK_UNAVAILABLE', 503);
   }
+
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new SiteApiError('NETWORK_RESPONSE_INVALID', 502);
+  }
+  if (!response.ok) {
+    const code = readErrorCode(body) ?? 'NETWORK_UNAVAILABLE';
+    throw new SiteApiError(code, response.status);
+  }
+  return body;
+}
+
+function readErrorCode(value: unknown): string | null {
+  if (typeof value !== 'object' || value === null || !('error' in value)) return null;
+  const error = value.error;
+  if (typeof error !== 'object' || error === null || !('code' in error)) return null;
+  return typeof error.code === 'string' ? error.code : null;
 }

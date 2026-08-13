@@ -1,135 +1,114 @@
 # teti-site
 
-Official MVP homepage for [teti.bot](https://teti.bot): an open AI companion
-network explorer.
+Official website for [teti.bot](https://teti.bot), the public entry point to the Teti Network.
 
-The first version is intentionally small:
+Teti is a local AI identity node. The Beta 1.0 website explains that identity model, shows the
+public Teti directory and coarse Presence, supports exact Teti ID lookup, hands connection intent
+to the macOS app, and provides the macOS release entry point.
 
-- explain what Teti is
-- list current Teti identities
-- show basic status and capabilities
-- request a connection through `teti://connect`
-- guide users to Teti Desktop when the handoff does not open
+It does not provide accounts, chat, a social feed, a management dashboard, or its own Registry.
 
-It does not include login, chat, feeds, profiles, CMS, or a dashboard shell.
+## Architecture
+
+```text
+Browser
+  -> teti.bot (Cloudflare Pages)
+  -> /api/network* (same-origin Pages Function BFF)
+  -> network.teti.bot (Teti Network v0.1.9 Public Surface)
+  -> Redis Presence + SQLite Identity/Profile data
+```
+
+Cloudflare Pages hosts the site, static assets, and a small server-side BFF. Teti Network data is
+provided exclusively by `network.teti.bot`. This repository does not maintain a Registry or
+Network database, and it has no Workers KV dependency or legacy fallback.
+
+The BFF consumes only these unauthenticated, allowlisted Public Surface endpoints:
+
+- `GET /v1/public/directory`
+- `GET /v1/public/identities/{tetiId}`
+- `GET /v1/public/stats`
+
+The browser consumes the stable same-origin routes `GET /api/network` and
+`GET /api/network/identities/{tetiId}`. It never receives Network routing or private Node data.
 
 ## Stack
 
-- React + Vite + TypeScript
+- React 19, Vite, and TypeScript
 - Astryx design system packages
-- Cloudflare Pages for the static frontend
-- Cloudflare Worker + KV for the registry API
+- Cloudflare Pages and Pages Functions
+- Teti Network Protocol 1, Contract Revision 9
+- npm
 
 ## Local Development
 
-Install dependencies:
+Prerequisites:
+
+- Node.js 22 or newer for `teti-site`
+- A local Teti Network v0.1.9 service at `http://127.0.0.1:8788`
+
+Install and validate dependencies:
 
 ```bash
-npm install
+npm ci
+npm run typecheck
+npm test
 ```
 
-Start the Vite dev server:
+Start Vite for the full same-origin Site API flow:
 
 ```bash
 npm run dev
 ```
 
-Build the production bundle:
+The local Vite middleware reuses the production `createSiteApi` handler and calls
+`http://127.0.0.1:8788`. To test the actual Cloudflare Pages runtime, run:
+
+```bash
+npm run pages:dev
+```
+
+Open `http://127.0.0.1:4173`. The script binds the BFF-only origin to
+`http://127.0.0.1:8788`; browser calls remain same-origin under `/api/network*`.
+
+Production build and preview:
 
 ```bash
 npm run build
-```
-
-Preview the production build locally:
-
-```bash
 npm run preview
 ```
 
-The frontend build output is written to `dist`.
+The production output directory is `dist`.
 
-## Worker Development
+## Internationalization
 
-Run the local Worker API:
-
-```bash
-npm run worker:dev
-```
-
-API routes:
-
-- `GET /api/tetis`
-- `GET /api/tetis?page=n`
-- `GET /api/stats`
-- `GET /api/health`
-- `POST /api/register`
-- `POST /api/heartbeat`
-- `POST /api/admin/rebuild-index` (requires `ADMIN_TOKEN`)
-- `GET /api/tetis/:id`
-- `POST /api/tetis/:id/connect`
-- `GET /api/desktop`
+The UI supports one Chinese interface (`zh`) and English (`en`). On first visit, any browser
+locale beginning with `zh` selects Chinese; all other locales select English. A manual `中 / EN`
+choice is stored in `localStorage` and takes priority over browser language on later visits.
 
 ## Cloudflare Pages Deployment
 
-Connect the GitHub repository to Cloudflare Pages:
+Connect `midimily/teti-site` to Cloudflare Pages with:
 
-- Repository: `midimily/teti-site`
 - Framework preset: `Vite`
 - Build command: `npm run build`
 - Build output directory: `dist`
 - Root directory: `/`
-- Node.js version: use the Cloudflare default or any current LTS version
+- Production branch: `main`
 
-Cloudflare Pages should run `npm install` automatically before the build. Do not
-commit `node_modules`, `dist`, `.env`, or local machine files.
+Pages automatically deploys the `functions/` directory with the static build. Production defaults
+to `https://network.teti.bot`; no secret or data binding is required. An optional plain-text Pages
+environment variable can override the origin for a controlled preview environment:
 
-Bind the KV namespace to Pages:
-
-- Variable/binding type: KV namespace
-- Binding name: `TETI_REG` or `TETI_REGISTRY`
-- Namespace: the production Teti registry KV namespace, currently named `TETI_REGISTRY`
-
-## Cloudflare Worker + KV
-
-The Pages Function in `functions/api/[[path]].ts` forwards `/api/*` requests to
-the Worker implementation in `worker/index.ts`, so Cloudflare Pages automatic
-deployments can read `TETI_REG` or `TETI_REGISTRY` directly.
-
-KV binding:
-
-- Worker binding name: `TETI`
-- Pages binding name: `TETI_REG` (the API also accepts `TETI_REGISTRY`)
-
-KV keys:
-
-- `teti:{id}` - one JSON registry document per public Teti identity
-- `registry:active` - cached public active snapshot
-- `registry:recent` - recent registrations
-- `registry:stats` - public aggregate counts
-- `registry:index:page:n` - paginated registry index
-- `registry:active:bucket:00` through `registry:active:bucket:31` - sharded heartbeat state
-- `desktop:latest` - future desktop release metadata
-
-See [the beta registry plan](docs/registry-beta-plan.md) for the aggregate,
-heartbeat, and authenticated rebuild design. Set `ADMIN_TOKEN` as a Worker and
-Pages secret before using the rebuild endpoint.
-
-Example registry key:
-
-- Key: `teti:teti_1pzwnnbt8`
-- Value shape:
-
-```json
-{
-  "version": 1,
-  "id": "teti_1pzwnnbt8",
-  "address": "1pzwnnbt8@mail.seep.im",
-  "publicProfile": {
-    "platform": "macOS",
-    "category": ["developer"],
-    "aiEnvironment": ["Codex"]
-  },
-  "createdAt": "2026-07-12T03:01:49.881Z",
-  "updatedAt": "2026-07-12T03:01:49.881Z"
-}
+```text
+TETI_NETWORK_ORIGIN=https://network.teti.bot
 ```
+
+Do not configure `TETI_REGISTRY`, a KV namespace, or a legacy Registry Worker. Do not commit
+`node_modules`, `dist`, `.env`, `.dev.vars`, or machine-local files.
+
+## Public Failure Behavior
+
+If Teti Network is unavailable, the static site, product explanation, and download entry remain
+usable. The Network directory reports a temporary outage instead of showing an empty Registry or
+marking every Teti unavailable. After a successful read, a later refresh failure keeps the last
+successful snapshot and marks live updates as paused.

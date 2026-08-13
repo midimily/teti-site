@@ -11,11 +11,12 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src", "worker", "functions", "vite.config.ts"]
+  "include": ["src", "server", "functions", "vite.config.ts"]
 }
