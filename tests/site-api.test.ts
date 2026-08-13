@@ -5,7 +5,7 @@ import {createSiteApi, type EdgeCache} from '../server/site-api.ts';
 
 const networkHeaders = {
   'Content-Type': 'application/json',
-  'Teti-Contract-Revision': '9',
+  'Teti-Contract-Revision': '10',
   'Teti-Protocol-Version': '1',
 };
 
@@ -20,6 +20,7 @@ function networkFetch(status = 200): typeof fetch {
               tetiId: 'teti_a83kd9x2q',
               displayName: 'Local Teti',
               summary: 'Local AI identity.',
+              capabilityIds: [],
               presence: 'available',
             },
           ],
@@ -45,6 +46,7 @@ function networkFetch(status = 200): typeof fetch {
         displayName: 'Local Teti',
         summary: 'Local AI identity.',
         presence: 'unavailable',
+        capabilityIds: ['code-analysis', 'research'],
       }),
       {status, headers: networkHeaders},
     );
@@ -67,6 +69,7 @@ test('maps directory and stats into the Site snapshot contract', async () => {
         displayName: 'Local Teti',
         summary: 'Local AI identity.',
         presence: 'available',
+        capabilities: [],
       },
     ],
     page: {limit: 20, returnedCount: 1, nextCursor: null},
@@ -90,6 +93,15 @@ test('normalizes human Teti IDs before exact lookup', async () => {
   })(new Request('https://teti.bot/api/network/identities/%20TETI_A83KD9X2Q%20'));
   assert.equal(response.status, 200);
   assert.match(urls[0], /\/v1\/public\/identities\/teti_a83kd9x2q$/);
+  assert.deepEqual(await response.json(), {
+    identity: {
+      id: 'teti_a83kd9x2q',
+      displayName: 'Local Teti',
+      summary: 'Local AI identity.',
+      presence: 'unavailable',
+      capabilities: ['code-analysis', 'research'],
+    },
+  });
 
   const invalid = await createSiteApi({fetch: networkFetch(), logger: () => {}})(
     new Request('https://teti.bot/api/network/identities/not-a-teti'),
@@ -127,6 +139,7 @@ test('maps 404 and 429 and preserves Retry-After', async () => {
     logger: () => {},
   })(new Request('https://teti.bot/api/network/identities/teti_a83kd9x2q'));
   assert.equal(notFound.status, 404);
+  assert.deepEqual(await notFound.json(), {error: {code: 'TETI_NOT_FOUND'}});
 
   const limited = await createSiteApi({
     fetch: async () =>

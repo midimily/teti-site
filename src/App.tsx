@@ -7,22 +7,33 @@ import {Footer} from './components/Footer';
 import {Header} from './components/Header';
 import {Hero} from './components/Hero';
 import {IdentityIntro} from './components/IdentityIntro';
+import {IdentityPage} from './components/IdentityPage';
+import {SiteLink} from './components/SiteLink';
 import {Stats} from './components/Stats';
 import {TetiList} from './components/TetiList';
+import {useI18n} from './i18n';
 import {fetchNetworkSnapshot, type NetworkSnapshot, type TetiIdentity} from './lib/tetiData';
 import type {ConnectionFallbackReason} from './lib/tetiProtocol';
+import {usePageMetadata} from './lib/pageMetadata';
+import {useSiteRoute} from './lib/siteRouting';
 import {tetiTheme} from './theme';
 
 type NetworkState = 'loading' | 'ready' | 'stale' | 'unavailable';
 type ConnectFallback = {identity: TetiIdentity; reason: ConnectionFallbackReason} | null;
 
-export default function App() {
+type HomePageProps = {
+  onConnectFallback: (identity: TetiIdentity, reason: ConnectionFallbackReason) => void;
+};
+
+function HomePage({onConnectFallback}: HomePageProps) {
+  const {t} = useI18n();
   const [snapshot, setSnapshot] = useState<NetworkSnapshot | null>(null);
   const [networkState, setNetworkState] = useState<NetworkState>('loading');
   const [refreshToken, setRefreshToken] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [connectFallback, setConnectFallback] = useState<ConnectFallback>(null);
   const hasLoaded = useRef(false);
+
+  usePageMetadata(t('meta.title'), t('meta.description'), '/');
 
   const refresh = useCallback(() => setRefreshToken(value => value + 1), []);
 
@@ -75,24 +86,60 @@ export default function App() {
   };
 
   return (
+    <>
+      <Hero />
+      <Stats stats={snapshot?.stats ?? null} />
+      <IdentityIntro />
+      <TetiList
+        identities={snapshot?.identities ?? null}
+        page={snapshot?.page ?? null}
+        publicCount={snapshot?.stats.publicTetis ?? null}
+        state={networkState}
+        isLoadingMore={isLoadingMore}
+        onRetry={refresh}
+        onLoadMore={() => void loadMore()}
+        onConnectFallback={onConnectFallback}
+      />
+      <DownloadBanner />
+    </>
+  );
+}
+
+function SiteNotFound() {
+  const {t} = useI18n();
+  usePageMetadata(t('pageNotFound.metaTitle'), t('pageNotFound.body'), window.location.pathname);
+  return (
+    <section className="identity-profile" aria-labelledby="site-not-found-title">
+      <div className="identity-state">
+        <span className="section-eyebrow">teti.bot</span>
+        <h1 id="site-not-found-title">{t('pageNotFound.title')}</h1>
+        <p>{t('pageNotFound.body')}</p>
+        <SiteLink className="text-action" href="/">
+          {t('pageNotFound.home')}
+        </SiteLink>
+      </div>
+    </section>
+  );
+}
+
+export default function App() {
+  const route = useSiteRoute();
+  const [connectFallback, setConnectFallback] = useState<ConnectFallback>(null);
+  const onConnectFallback = (identity: TetiIdentity, reason: ConnectionFallbackReason) =>
+    setConnectFallback({identity, reason});
+
+  return (
     <Theme theme={tetiTheme}>
       <div className="app-shell" id="top">
-        <Header />
+        <Header isHome={route.kind === 'home'} />
         <main>
-          <Hero />
-          <Stats stats={snapshot?.stats ?? null} />
-          <IdentityIntro />
-          <TetiList
-            identities={snapshot?.identities ?? null}
-            page={snapshot?.page ?? null}
-            publicCount={snapshot?.stats.publicTetis ?? null}
-            state={networkState}
-            isLoadingMore={isLoadingMore}
-            onRetry={refresh}
-            onLoadMore={() => void loadMore()}
-            onConnectFallback={(identity, reason) => setConnectFallback({identity, reason})}
-          />
-          <DownloadBanner />
+          {route.kind === 'home' ? (
+            <HomePage onConnectFallback={onConnectFallback} />
+          ) : route.kind === 'identity' ? (
+            <IdentityPage tetiId={route.tetiId} onConnectFallback={onConnectFallback} />
+          ) : (
+            <SiteNotFound />
+          )}
         </main>
         <Footer />
       </div>

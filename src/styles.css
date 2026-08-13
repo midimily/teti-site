@@ -193,6 +193,7 @@ img {
 .identity-section,
 .directory-section,
 .download-section,
+.identity-profile,
 .site-footer {
   width: min(var(--page-width), calc(100% - 48px));
   margin-inline: auto;
@@ -477,19 +478,6 @@ img {
   font-size: 0.8rem;
 }
 
-.lookup-result {
-  display: grid;
-  gap: 8px;
-  margin-top: 20px;
-}
-
-.lookup-result > span {
-  color: var(--teti-blue);
-  font-size: 0.76rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .network-notice {
   justify-content: space-between;
   gap: 16px;
@@ -517,11 +505,6 @@ img {
   border-radius: var(--teti-radius);
   background: var(--teti-white);
   list-style: none;
-}
-
-.lookup-result .teti-list {
-  margin-top: 0;
-  border-color: #b8cdf8;
 }
 
 .teti-row {
@@ -574,6 +557,21 @@ img {
   color: var(--teti-ink);
   font-size: 1.02rem;
   line-height: 1.35;
+}
+
+.teti-titleline a,
+.teti-id-link {
+  text-decoration: none;
+}
+
+.teti-titleline a:hover,
+.teti-id-link:hover {
+  color: var(--teti-blue-hover);
+}
+
+.teti-titleline a:focus-visible,
+.teti-id-link:focus-visible {
+  border-radius: 3px;
 }
 
 .teti-main code {
@@ -645,6 +643,208 @@ img {
   display: flex;
   justify-content: center;
   padding-top: 22px;
+}
+
+.identity-profile {
+  min-height: calc(100svh - 190px);
+  padding-block: 46px 112px;
+}
+
+.identity-back,
+.text-action {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  gap: 7px;
+  color: var(--teti-text);
+  font-size: 0.84rem;
+  font-weight: 620;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.identity-back:hover,
+.text-action:hover {
+  color: var(--teti-blue);
+}
+
+.identity-profile-content,
+.identity-state,
+.identity-profile-loading {
+  width: min(760px, 100%);
+  margin-top: 76px;
+}
+
+.identity-profile-content {
+  display: grid;
+}
+
+.identity-profile-content > .network-notice {
+  margin: 0 0 28px;
+}
+
+.identity-profile-header {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+  padding-bottom: 42px;
+  border-bottom: 1px solid var(--teti-border);
+}
+
+.identity-profile-mark {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+  border: 1px solid var(--teti-border);
+  border-radius: var(--teti-radius);
+  background: var(--teti-surface);
+}
+
+.identity-profile-mark .logo-banner img {
+  width: 62px;
+  height: 52px;
+}
+
+.identity-profile-heading {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+}
+
+.identity-profile-heading h1,
+.identity-state h1 {
+  margin: 0;
+  color: var(--teti-ink);
+  font-size: 3rem;
+  font-weight: 690;
+  letter-spacing: 0;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.identity-profile-heading > p,
+.identity-state > p {
+  max-width: 660px;
+  margin: 0;
+  color: var(--teti-text);
+  line-height: 1.7;
+}
+
+.identity-profile-idline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.identity-profile-idline code,
+.identity-state code {
+  color: var(--teti-blue);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.identity-profile-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-block: 26px;
+}
+
+.copy-feedback {
+  min-height: 20px;
+  margin-top: -18px;
+  color: #b42318;
+  font-size: 0.8rem;
+}
+
+.identity-capabilities {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
+  gap: 24px;
+  padding-block: 28px;
+  border-top: 1px solid var(--teti-border);
+  border-bottom: 1px solid var(--teti-border);
+}
+
+.identity-capabilities h2 {
+  margin: 0;
+  color: var(--teti-ink);
+  font-size: 0.9rem;
+  font-weight: 670;
+  letter-spacing: 0;
+}
+
+.identity-capabilities p {
+  margin: 0;
+  color: var(--teti-muted);
+  font-size: 0.88rem;
+}
+
+.identity-capabilities ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.identity-capabilities li {
+  color: var(--teti-text);
+  font-size: 0.88rem;
+  font-weight: 590;
+}
+
+.identity-capabilities li::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--teti-blue);
+  vertical-align: 2px;
+}
+
+.identity-state {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+
+.identity-state > *[class*="astryx"] {
+  margin-top: 4px;
+}
+
+.identity-profile-loading {
+  display: grid;
+  gap: 18px;
+}
+
+.identity-profile-loading span {
+  display: block;
+  height: 22px;
+  border-radius: 4px;
+  background: #edf0f4;
+}
+
+.identity-profile-loading span:nth-child(1) {
+  width: 38%;
+  height: 52px;
+}
+
+.identity-profile-loading span:nth-child(2) {
+  width: 28%;
+}
+
+.identity-profile-loading span:nth-child(3) {
+  width: 72%;
+  height: 16px;
 }
 
 .download-section {
@@ -851,6 +1051,7 @@ button:active:not(:disabled),
   .identity-section,
   .directory-section,
   .download-section,
+  .identity-profile,
   .site-footer {
     width: min(100% - 32px, var(--page-width));
   }
@@ -947,6 +1148,42 @@ button:active:not(:disabled),
     padding: 28px;
   }
 
+  .identity-profile {
+    min-height: calc(100svh - 160px);
+    padding-block: 30px 80px;
+  }
+
+  .identity-profile-content,
+  .identity-state,
+  .identity-profile-loading {
+    margin-top: 52px;
+  }
+
+  .identity-profile-header {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .identity-profile-mark {
+    width: 68px;
+    height: 68px;
+  }
+
+  .identity-profile-mark .logo-banner img {
+    width: 50px;
+    height: 42px;
+  }
+
+  .identity-profile-heading h1,
+  .identity-state h1 {
+    font-size: 2.35rem;
+  }
+
+  .identity-capabilities {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
   .site-footer {
     display: grid;
     padding-bottom: 34px;
@@ -997,6 +1234,15 @@ button:active:not(:disabled),
   }
 
   .modal-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .identity-profile-header {
+    grid-template-columns: 1fr;
+  }
+
+  .identity-profile-actions > :not(.sr-only) {
     width: 100%;
     justify-content: center;
   }

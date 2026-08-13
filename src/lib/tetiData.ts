@@ -5,6 +5,7 @@ export type TetiIdentity = {
   displayName: string | null;
   summary: string | null;
   presence: TetiPresence;
+  capabilities: string[];
 };
 
 export type NetworkSnapshot = {
@@ -37,7 +38,14 @@ export async function fetchNetworkSnapshot(
 ): Promise<NetworkSnapshot> {
   const query = new URLSearchParams({limit: '50'});
   if (input.cursor) query.set('cursor', input.cursor);
-  return requestJson(`/api/network?${query.toString()}`, input.signal) as Promise<NetworkSnapshot>;
+  const response = (await requestJson(
+    `/api/network?${query.toString()}`,
+    input.signal,
+  )) as NetworkSnapshot;
+  return {
+    ...response,
+    identities: response.identities.map(normalizeCapabilities),
+  };
 }
 
 export async function fetchTetiIdentity(
@@ -48,7 +56,16 @@ export async function fetchTetiIdentity(
     `/api/network/identities/${encodeURIComponent(tetiId)}`,
     signal,
   )) as {identity: TetiIdentity};
-  return response.identity;
+  return normalizeCapabilities(response.identity);
+}
+
+function normalizeCapabilities(identity: Omit<TetiIdentity, 'capabilities'> & {capabilities?: unknown}) {
+  return {
+    ...identity,
+    capabilities: Array.isArray(identity.capabilities)
+      ? identity.capabilities.filter(value => typeof value === 'string')
+      : [],
+  };
 }
 
 async function requestJson(path: string, signal?: AbortSignal): Promise<unknown> {

@@ -7,6 +7,7 @@ export type NetworkPublicIdentity = {
   displayName: string | null;
   summary: string | null;
   presence: PublicPresence;
+  capabilityIds: string[];
 };
 
 export type NetworkDirectory = {
@@ -30,6 +31,7 @@ export type SiteIdentity = {
   displayName: string | null;
   summary: string | null;
   presence: PublicPresence;
+  capabilities: string[];
 };
 
 export type SiteNetworkSnapshot = {
@@ -64,6 +66,25 @@ function nonNegativeInteger(value: unknown): number {
   return value;
 }
 
+function capabilityIds(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length > 32) throw new Error('Invalid capability IDs');
+  const ids = value.map(item => {
+    if (
+      typeof item !== 'string' ||
+      item.length > 64 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item)
+    ) {
+      throw new Error('Invalid capability ID');
+    }
+    return item;
+  });
+  const canonical = [...new Set(ids)].sort((left, right) => left.localeCompare(right));
+  if (canonical.length !== ids.length || canonical.some((item, index) => item !== ids[index])) {
+    throw new Error('Capability IDs are not canonical');
+  }
+  return ids;
+}
+
 export function parsePublicIdentity(value: unknown): NetworkPublicIdentity {
   if (!isRecord(value) || typeof value.tetiId !== 'string' || !TETI_ID_PATTERN.test(value.tetiId)) {
     throw new Error('Invalid public identity');
@@ -76,6 +97,7 @@ export function parsePublicIdentity(value: unknown): NetworkPublicIdentity {
     displayName: stringOrNull(value.displayName, 80),
     summary: stringOrNull(value.summary, 512),
     presence: value.presence,
+    capabilityIds: capabilityIds(value.capabilityIds),
   };
 }
 
@@ -136,6 +158,7 @@ export function toSiteIdentity(identity: NetworkPublicIdentity): SiteIdentity {
     displayName: identity.displayName,
     summary: identity.summary,
     presence: identity.presence,
+    capabilities: identity.capabilityIds,
   };
 }
 

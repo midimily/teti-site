@@ -2,19 +2,26 @@ import {Button} from '@astryxdesign/core/Button';
 
 import {useI18n} from '../i18n';
 import {Logo} from './Logo';
+import {SiteLink} from './SiteLink';
 
-export function Header() {
+export function Header({isHome}: {isHome: boolean}) {
   const {locale, setLocale, t} = useI18n();
+  const sectionHref = (hash: string) => `${isHome ? '' : '/'}#${hash}`;
 
   return (
     <header className="site-header">
-      <a className="brand" href="#top" aria-label={t('aria.tetiHome')}>
+      <SiteLink className="brand" href="/" aria-label={t('aria.tetiHome')}>
         <Logo size="header" withWordmark />
-      </a>
+      </SiteLink>
       <nav className="header-nav" aria-label={t('aria.primaryNavigation')}>
-        <a href="#identity">{t('nav.identity')}</a>
-        <a href="#network">{t('nav.network')}</a>
-        <Button label={t('nav.download')} variant="secondary" size="sm" href="#download" />
+        <SiteLink href={sectionHref('identity')}>{t('nav.identity')}</SiteLink>
+        <SiteLink href={sectionHref('network')}>{t('nav.network')}</SiteLink>
+        <Button
+          label={t('nav.download')}
+          variant="secondary"
+          size="sm"
+          href={sectionHref('download')}
+        />
       </nav>
       <div className="language-switch" role="group" aria-label={t('language.label')}>
         <button

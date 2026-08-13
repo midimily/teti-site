@@ -137,7 +137,7 @@ export class TetiNetworkClient {
         headers: {
           accept: 'application/json',
           'Teti-Client-Platform': 'web',
-          'Teti-Client-Version': '1.0.0-beta.1',
+          'Teti-Client-Version': '1.1.0-beta.1',
           'Teti-Protocol-Version': '1',
         },
         signal: controller.signal,
@@ -157,7 +157,10 @@ export class TetiNetworkClient {
 
     const protocolVersion = response.headers.get('Teti-Protocol-Version');
     const contractRevision = Number(response.headers.get('Teti-Contract-Revision'));
-    if (response.ok && (protocolVersion !== '1' || !Number.isInteger(contractRevision) || contractRevision < 9)) {
+    if (
+      response.ok &&
+      (protocolVersion !== '1' || !Number.isInteger(contractRevision) || contractRevision < 10)
+    ) {
       throw new TetiNetworkClientError('invalid-response');
     }
 

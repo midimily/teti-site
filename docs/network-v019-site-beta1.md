@@ -1,5 +1,10 @@
 # Teti Site Beta 1.0 - Network v0.1.9 Integration
 
+> Beta 1.1 adds canonical `/{tetiId}` identity pages on top of this integration. Teti Network
+> v0.1.10 / Contract Revision 10 now provides the approved public capability ID projection required
+> by those pages. Exact resolution continues to use `/v1/public/identities/{tetiId}`; the Site does
+> not consume the legacy Node Resolution routes.
+
 ## Final boundary
 
 ```text
@@ -14,13 +19,13 @@ and BFF runtime; Workers KV and the legacy Registry Worker have no production ro
 
 ## Contract mapping
 
-| Site capability | Pages BFF | Network v0.1.9 | Site fields |
+| Site capability | Pages BFF | Network Public Surface | Site fields |
 | --- | --- | --- | --- |
-| Public directory | `GET /api/network` | `GET /v1/public/directory` | `id`, `displayName`, `summary`, `presence` |
+| Public directory | `GET /api/network` | `GET /v1/public/directory` | `id`, `displayName`, `summary`, `presence`, `capabilities` |
 | Network counts | `GET /api/network` | `GET /v1/public/stats` | `totalTetis`, `publicTetis`, `availableNow`, `generatedAt` |
-| Exact Teti ID lookup | `GET /api/network/identities/{id}` | `GET /v1/public/identities/{tetiId}` | `id`, `displayName`, `summary`, `presence` |
+| Exact Teti ID lookup | `GET /api/network/identities/{id}` | `GET /v1/public/identities/{tetiId}` | `id`, `displayName`, `summary`, `presence`, `capabilities` |
 
-The BFF requires Protocol 1 and Contract Revision 9 or newer, validates every success body, maps
+The Beta 1.1 BFF requires Protocol 1 and Contract Revision 10 or newer, validates every success body, maps
 Network DTOs through a field allowlist, and sends no authentication secret. It never calls the
 Protocol 1 compatibility routes under `/v1/public/nodes*`.
 

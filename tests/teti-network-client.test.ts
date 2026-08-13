@@ -5,11 +5,11 @@ import {TetiNetworkClient, TetiNetworkClientError} from '../server/teti-network-
 
 const responseHeaders = {
   'Content-Type': 'application/json',
-  'Teti-Contract-Revision': '9',
+  'Teti-Contract-Revision': '10',
   'Teti-Protocol-Version': '1',
 };
 
-test('calls the Revision 9 Public Surface with site protocol headers', async () => {
+test('calls the Revision 10 Public Surface with Beta 1.1 protocol headers', async () => {
   const requests: Request[] = [];
   const client = new TetiNetworkClient({
     origin: 'https://network.example',
@@ -28,6 +28,7 @@ test('calls the Revision 9 Public Surface with site protocol headers', async () 
   assert.equal(requests[0].url, 'https://network.example/v1/public/directory?limit=4');
   assert.equal(requests[0].headers.get('Teti-Protocol-Version'), '1');
   assert.equal(requests[0].headers.get('Teti-Client-Platform'), 'web');
+  assert.equal(requests[0].headers.get('Teti-Client-Version'), '1.1.0-beta.1');
 });
 
 test('preserves the runtime receiver when using the global fetch implementation', async () => {
@@ -107,7 +108,7 @@ test('rejects success from an incompatible contract revision', async () => {
           availableNodeCount: 0,
           generatedAt: '2026-08-13T10:00:00.000Z',
         }),
-        {headers: {...responseHeaders, 'Teti-Contract-Revision': '8'}},
+        {headers: {...responseHeaders, 'Teti-Contract-Revision': '9'}},
       ),
   });
   await assert.rejects(client.getPublicStats(), error => {

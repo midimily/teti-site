@@ -1,16 +1,12 @@
-import {useEffect, useRef, useState, type FormEvent} from 'react';
+import {useState, type FormEvent} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Heading} from '@astryxdesign/core/Heading';
 import {Search} from 'lucide-react';
 
 import {useI18n} from '../i18n';
-import {
-  fetchTetiIdentity,
-  SiteApiError,
-  type NetworkSnapshot,
-  type TetiIdentity,
-} from '../lib/tetiData';
+import type {NetworkSnapshot, TetiIdentity} from '../lib/tetiData';
 import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
+import {identityPath, navigateTo, TETI_ID_PATTERN} from '../lib/siteRouting';
 import {TetiRow} from './TetiRow';
 
 type TetiListProps = {
@@ -24,8 +20,7 @@ type TetiListProps = {
   onConnectFallback: (identity: TetiIdentity, reason: ConnectionFallbackReason) => void;
 };
 
-type LookupState = 'idle' | 'invalid' | 'loading' | 'not-found' | 'failed' | 'found';
-const TETI_ID_PATTERN = /^teti_[a-z0-9]{9}$/;
+type LookupState = 'idle' | 'invalid';
 
 export function TetiList({
   identities,
@@ -40,32 +35,15 @@ export function TetiList({
   const {formatNumber, t} = useI18n();
   const [query, setQuery] = useState('');
   const [lookupState, setLookupState] = useState<LookupState>('idle');
-  const [lookupResult, setLookupResult] = useState<TetiIdentity | null>(null);
-  const lookupController = useRef<AbortController | null>(null);
 
-  useEffect(() => () => lookupController.current?.abort(), []);
-
-  const submitLookup = async (event: FormEvent<HTMLFormElement>) => {
+  const submitLookup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalized = query.trim().toLowerCase();
     if (!TETI_ID_PATTERN.test(normalized)) {
-      setLookupResult(null);
       setLookupState('invalid');
       return;
     }
-    lookupController.current?.abort();
-    const controller = new AbortController();
-    lookupController.current = controller;
-    setLookupResult(null);
-    setLookupState('loading');
-    try {
-      const identity = await fetchTetiIdentity(normalized, controller.signal);
-      setLookupResult(identity);
-      setLookupState('found');
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      setLookupState(error instanceof SiteApiError && error.status === 404 ? 'not-found' : 'failed');
-    }
+    navigateTo(identityPath(normalized));
   };
 
   const isInitialLoading = state === 'loading' && identities === null;
@@ -76,13 +54,7 @@ export function TetiList({
       ? t('directory.unavailableCount')
       : t('directory.count', {count: formatNumber(publicCount ?? visibleIdentities.length)});
   const lookupMessage =
-    lookupState === 'invalid'
-      ? t('directory.findInvalid')
-      : lookupState === 'not-found'
-        ? t('directory.findNotFound')
-        : lookupState === 'failed'
-          ? t('directory.findFailed')
-          : null;
+    lookupState === 'invalid' ? t('directory.findInvalid') : null;
 
   return (
     <section className="directory-section" id="network" aria-labelledby="directory-title">
@@ -112,18 +84,14 @@ export function TetiList({
             aria-describedby={lookupMessage ? 'lookup-message' : undefined}
             aria-invalid={lookupState === 'invalid'}
             onChange={event => {
-              lookupController.current?.abort();
-              lookupController.current = null;
               setQuery(event.target.value);
-              setLookupResult(null);
               setLookupState('idle');
             }}
           />
           <Button
-            label={lookupState === 'loading' ? t('directory.finding') : t('directory.findAction')}
+            label={t('directory.findAction')}
             variant="secondary"
             type="submit"
-            isDisabled={lookupState === 'loading'}
             icon={<Search size={16} aria-hidden="true" />}
           />
         </div>
@@ -131,15 +99,6 @@ export function TetiList({
           {lookupMessage ? <p id="lookup-message">{lookupMessage}</p> : null}
         </div>
       </form>
-
-      {lookupState === 'found' && lookupResult ? (
-        <div className="lookup-result">
-          <span>{t('directory.findResult')}</span>
-          <ul className="teti-list" role="list">
-            <TetiRow identity={lookupResult} onConnectFallback={onConnectFallback} />
-          </ul>
-        </div>
-      ) : null}
 
       {state === 'stale' ? (
         <div className="network-notice" role="status">

@@ -14,12 +14,21 @@ const identity = {
   displayName: "Meng's Teti",
   summary: 'A local AI identity.',
   presence: 'available',
+  capabilityIds: [],
 } as const;
 
 test('parses and allowlists a public identity', () => {
   assert.deepEqual(parsePublicIdentity({...identity, delivery: {address: 'private@example'}}), identity);
+  assert.deepEqual(
+    parsePublicIdentity({...identity, capabilityIds: ['code-analysis', 'research']}),
+    {...identity, capabilityIds: ['code-analysis', 'research']},
+  );
   assert.throws(() => parsePublicIdentity({...identity, presence: 'online'}));
   assert.throws(() => parsePublicIdentity({...identity, tetiId: 'TETI_A83KD9X2Q'}));
+  assert.throws(() => parsePublicIdentity({...identity, capabilityIds: undefined}));
+  assert.throws(() => parsePublicIdentity({...identity, capabilityIds: ['research', 'coding']}));
+  assert.throws(() => parsePublicIdentity({...identity, capabilityIds: ['Code Analysis']}));
+  assert.throws(() => parsePublicIdentity({...identity, capabilityIds: ['a'.repeat(65)]}));
 });
 
 test('validates directory pagination and stable ordering', () => {
@@ -65,6 +74,7 @@ test('validates public stats invariants and maps a site snapshot', () => {
     displayName: identity.displayName,
     summary: identity.summary,
     presence: identity.presence,
+    capabilities: identity.capabilityIds,
   });
 });
 
