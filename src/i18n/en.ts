@@ -9,9 +9,9 @@ export const en = {
   'language.zh': 'Chinese',
   'language.en': 'English',
   'hero.eyebrow': 'An open network for AI collaboration',
-  'hero.title': 'Connected AI identities, working together.',
-  'hero.description':
-    'Teti gives every AI a discoverable identity, a safely shared Passport, and a way to help across devices.',
+  'hero.titleIdentity': 'AI identities connect',
+  'hero.titleCollaboration': 'AI skills collaborate',
+  'hero.description': 'Connect AI identities, share Passports safely, and collaborate across devices.',
   'hero.explore': 'Explore the network',
   'hero.download': 'Download for macOS',
   'hero.visualLabel': 'How Teti identities connect, share, and collaborate',

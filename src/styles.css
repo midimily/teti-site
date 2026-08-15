@@ -224,14 +224,65 @@ img {
   overflow-wrap: break-word;
 }
 
-.hero-copy h1,
-.hero-copy h1 * {
-  color: var(--teti-ink) !important;
-}
-
 .hero-copy h1 {
   font-size: 4rem !important;
-  line-height: 1.06 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.035em !important;
+  font-optical-sizing: auto;
+}
+
+.hero-title-line {
+  display: block;
+  width: fit-content;
+  white-space: nowrap;
+  color: #287bd7 !important;
+  transform-origin: left center;
+  animation:
+    hero-title-enter 680ms cubic-bezier(0.23, 1, 0.32, 1) both,
+    hero-title-color-flow 7s ease-in-out 900ms infinite alternate;
+}
+
+.hero-title-line-collaboration {
+  color: #696ddd !important;
+  animation-delay: 90ms, 1.2s;
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .hero-title-line {
+    background-image: linear-gradient(105deg, #187fcf 0%, #24a9d8 48%, #64b5ec 100%);
+    background-size: 180% 100%;
+    background-position: 0% 50%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-title-line-collaboration {
+    background-image: linear-gradient(105deg, #566fdc 0%, #8d6ddd 50%, #d978aa 100%);
+  }
+}
+
+@keyframes hero-title-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.2em);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-title-color-flow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 100% 50%;
+  }
 }
 
 .hero-copy > p,
@@ -1607,6 +1658,12 @@ button:active:not(:disabled),
   }
 }
 
+@media (min-width: 721px) {
+  html[lang="en"] .hero-copy h1 {
+    font-size: clamp(2.85rem, 4.6vw, 3.45rem) !important;
+  }
+}
+
 @media (max-width: 720px) {
   html {
     scroll-padding-top: 72px;
@@ -1881,5 +1938,11 @@ button:active:not(:disabled),
 
   .hero-slide {
     transform: none;
+  }
+
+  .hero-title-line {
+    opacity: 1;
+    transform: none;
+    animation: none;
   }
 }

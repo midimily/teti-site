@@ -204,7 +204,12 @@ export function Hero() {
           <span>{t('hero.eyebrow')}</span>
         </div>
         <Heading level={1} type="display-1" textWrap="balance" id="hero-title">
-          {t('hero.title')}
+          <span className="hero-title-line hero-title-line-identity">
+            {t('hero.titleIdentity')}
+          </span>
+          <span className="hero-title-line hero-title-line-collaboration">
+            {t('hero.titleCollaboration')}
+          </span>
         </Heading>
         <Text type="large" color="secondary">
           {t('hero.description')}
