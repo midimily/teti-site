@@ -12,7 +12,13 @@ import {SiteLink} from './components/SiteLink';
 import {Stats} from './components/Stats';
 import {TetiList} from './components/TetiList';
 import {useI18n} from './i18n';
-import {fetchNetworkSnapshot, type NetworkSnapshot, type TetiIdentity} from './lib/tetiData';
+import {
+  appendNetworkSnapshot,
+  fetchNetworkSnapshot,
+  fetchNetworkWindow,
+  type NetworkSnapshot,
+  type TetiIdentity,
+} from './lib/tetiData';
 import type {ConnectionFallbackReason} from './lib/tetiProtocol';
 import {usePageMetadata} from './lib/pageMetadata';
 import {useSiteRoute} from './lib/siteRouting';
@@ -32,6 +38,8 @@ function HomePage({onConnectFallback}: HomePageProps) {
   const [refreshToken, setRefreshToken] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const hasLoaded = useRef(false);
+  const loadedPageCount = useRef(1);
+  const refreshController = useRef<AbortController | null>(null);
 
   usePageMetadata(t('meta.title'), t('meta.description'), '/');
 
@@ -39,19 +47,23 @@ function HomePage({onConnectFallback}: HomePageProps) {
 
   useEffect(() => {
     let isMounted = true;
-    let activeController: AbortController | null = null;
 
     const load = async () => {
-      activeController?.abort();
-      activeController = new AbortController();
+      refreshController.current?.abort();
+      const controller = new AbortController();
+      refreshController.current = controller;
       try {
-        const nextSnapshot = await fetchNetworkSnapshot({signal: activeController.signal});
+        const nextWindow = await fetchNetworkWindow({
+          pageCount: loadedPageCount.current,
+          signal: controller.signal,
+        });
         if (!isMounted) return;
-        setSnapshot(nextSnapshot);
+        loadedPageCount.current = nextWindow.loadedPageCount;
+        setSnapshot(nextWindow.snapshot);
         setNetworkState('ready');
         hasLoaded.current = true;
       } catch (error) {
-        if (!isMounted || activeController.signal.aborted) return;
+        if (!isMounted || controller.signal.aborted) return;
         setNetworkState(hasLoaded.current ? 'stale' : 'unavailable');
       }
     };
@@ -60,7 +72,7 @@ function HomePage({onConnectFallback}: HomePageProps) {
     const timer = window.setInterval(load, 10000);
     return () => {
       isMounted = false;
-      activeController?.abort();
+      refreshController.current?.abort();
       window.clearInterval(timer);
     };
   }, [refreshToken]);
@@ -68,15 +80,12 @@ function HomePage({onConnectFallback}: HomePageProps) {
   const loadMore = async () => {
     const cursor = snapshot?.page.nextCursor;
     if (!cursor || isLoadingMore) return;
+    refreshController.current?.abort();
     setIsLoadingMore(true);
     try {
       const next = await fetchNetworkSnapshot({cursor});
-      setSnapshot(current => {
-        if (!current) return next;
-        const identities = new Map(current.identities.map(identity => [identity.id, identity]));
-        next.identities.forEach(identity => identities.set(identity.id, identity));
-        return {...next, identities: [...identities.values()]};
-      });
+      setSnapshot(appendNetworkSnapshot(snapshot, next));
+      loadedPageCount.current += 1;
       setNetworkState('ready');
     } catch {
       setNetworkState(snapshot ? 'stale' : 'unavailable');

@@ -23,13 +23,20 @@ export type NetworkSnapshot = {
   };
 };
 
+export type NetworkWindow = {
+  snapshot: NetworkSnapshot;
+  loadedPageCount: number;
+};
+
 export class SiteApiError extends Error {
-  public constructor(
-    public readonly code: string,
-    public readonly status: number,
-  ) {
+  public readonly code: string;
+  public readonly status: number;
+
+  public constructor(code: string, status: number) {
     super(`Teti site API failed: ${code}`);
     this.name = 'SiteApiError';
+    this.code = code;
+    this.status = status;
   }
 }
 
@@ -46,6 +53,41 @@ export async function fetchNetworkSnapshot(
     ...response,
     identities: response.identities.map(normalizeCapabilities),
   };
+}
+
+export async function fetchNetworkWindow(
+  input: {
+    pageCount?: number;
+    signal?: AbortSignal;
+    fetchPage?: typeof fetchNetworkSnapshot;
+  } = {},
+): Promise<NetworkWindow> {
+  const requestedPageCount =
+    Number.isInteger(input.pageCount) && (input.pageCount ?? 0) > 0 ? input.pageCount! : 1;
+  const fetchPage = input.fetchPage ?? fetchNetworkSnapshot;
+  let snapshot = await fetchPage({signal: input.signal});
+  let loadedPageCount = 1;
+
+  while (loadedPageCount < requestedPageCount && snapshot.page.nextCursor) {
+    const next = await fetchPage({cursor: snapshot.page.nextCursor, signal: input.signal});
+    snapshot = appendNetworkSnapshot(snapshot, next);
+    loadedPageCount += 1;
+  }
+
+  return {snapshot, loadedPageCount};
+}
+
+export function appendNetworkSnapshot(
+  current: NetworkSnapshot,
+  next: NetworkSnapshot,
+): NetworkSnapshot {
+  const identities = [...current.identities, ...next.identities];
+  for (let index = 1; index < identities.length; index += 1) {
+    if (identities[index - 1].id >= identities[index].id) {
+      throw new SiteApiError('NETWORK_RESPONSE_INVALID', 502);
+    }
+  }
+  return {...next, identities};
 }
 
 export async function fetchTetiIdentity(

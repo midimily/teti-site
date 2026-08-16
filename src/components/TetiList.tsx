@@ -4,6 +4,7 @@ import {Heading} from '@astryxdesign/core/Heading';
 import {Search} from 'lucide-react';
 
 import {useI18n} from '../i18n';
+import {groupDirectoryIdentities} from '../lib/directoryOrdering';
 import type {NetworkSnapshot, TetiIdentity} from '../lib/tetiData';
 import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
 import {identityPath, navigateTo, TETI_ID_PATTERN} from '../lib/siteRouting';
@@ -32,7 +33,7 @@ export function TetiList({
   onLoadMore,
   onConnectFallback,
 }: TetiListProps) {
-  const {formatNumber, t} = useI18n();
+  const {formatNumber, locale, t} = useI18n();
   const [query, setQuery] = useState('');
   const [lookupState, setLookupState] = useState<LookupState>('idle');
 
@@ -48,6 +49,7 @@ export function TetiList({
 
   const isInitialLoading = state === 'loading' && identities === null;
   const visibleIdentities = identities ?? [];
+  const identityGroups = groupDirectoryIdentities(visibleIdentities, locale);
   const countLabel = isInitialLoading
     ? t('directory.loadingCount')
     : state === 'unavailable'
@@ -123,12 +125,30 @@ export function TetiList({
         ) : visibleIdentities.length === 0 ? (
           <li className="directory-message"><p>{t('directory.empty')}</p></li>
         ) : (
-          visibleIdentities.map(identity => (
-            <TetiRow
-              key={identity.id}
-              identity={identity}
-              onConnectFallback={onConnectFallback}
-            />
+          identityGroups.map(group => (
+            <li className="teti-group" key={group.presence}>
+              <div className="teti-group-header">
+                <h3>
+                  {t(
+                    group.presence === 'available'
+                      ? 'directory.groupAvailable'
+                      : 'directory.groupUnavailable',
+                  )}
+                </h3>
+                <span>
+                  {t('directory.groupCount', {count: formatNumber(group.identities.length)})}
+                </span>
+              </div>
+              <ul className="teti-group-list" role="list">
+                {group.identities.map(identity => (
+                  <TetiRow
+                    key={identity.id}
+                    identity={identity}
+                    onConnectFallback={onConnectFallback}
+                  />
+                ))}
+              </ul>
+            </li>
           ))
         )}
       </ul>

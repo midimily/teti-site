@@ -1141,6 +1141,39 @@ img {
   transition: background-color 150ms ease;
 }
 
+.teti-group + .teti-group {
+  border-top: 1px solid var(--teti-border);
+}
+
+.teti-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--teti-border);
+  background: var(--teti-surface);
+}
+
+.teti-group-header h3 {
+  margin: 0;
+  color: var(--teti-ink);
+  font-size: 0.82rem;
+  font-weight: 680;
+  letter-spacing: 0.01em;
+}
+
+.teti-group-header span {
+  color: var(--teti-muted);
+  font-size: 0.74rem;
+}
+
+.teti-group-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .teti-row + .teti-row {
   border-top: 1px solid var(--teti-border);
 }
@@ -1761,6 +1794,10 @@ button:active:not(:disabled),
     grid-template-columns: 42px minmax(0, 1fr);
     gap: 14px;
     padding: 20px;
+  }
+
+  .teti-group-header {
+    padding-inline: 20px;
   }
 
   .teti-row > .connect-action {
