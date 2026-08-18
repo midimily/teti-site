@@ -6,14 +6,8 @@ export function Footer() {
 
   return (
     <footer className="site-footer">
-      <div>
-        <Logo size="header" withWordmark />
-        <p>{t('footer.description')}</p>
-      </div>
+      <Logo size="header" withWordmark />
       <nav aria-label={t('aria.footerNavigation')}>
-        <a href="https://network.teti.bot" rel="noreferrer" target="_blank">
-          {t('footer.networkApi')}
-        </a>
         <a href="https://github.com/midimily/teti-site" rel="noreferrer" target="_blank">
           {t('footer.github')}
         </a>

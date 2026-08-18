@@ -1620,17 +1620,6 @@ img {
   border-top: 1px solid var(--teti-border);
 }
 
-.site-footer > div {
-  display: grid;
-  gap: 8px;
-}
-
-.site-footer p {
-  margin: 0;
-  color: var(--teti-muted);
-  font-size: 0.82rem;
-}
-
 .site-footer nav {
   gap: 18px;
 }
