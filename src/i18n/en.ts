@@ -128,7 +128,7 @@ export const en = {
   'download.macos.name': 'macOS',
   'download.macos.status': 'Beta',
   'download.macos.compatibility': 'macOS 15+ · Apple silicon',
-  'download.macos.version': 'Beta 0.3.9',
+  'download.macos.version': '0.4.1 Beta 2',
   'download.macos.action': 'Download for macOS',
   'download.windows.name': 'Windows',
   'download.windows.status': 'Preview 1',

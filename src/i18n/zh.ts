@@ -123,7 +123,7 @@ export const zh: Record<MessageKey, string> = {
   'download.macos.name': 'macOS',
   'download.macos.status': 'Beta',
   'download.macos.compatibility': 'macOS 15+ · Apple 芯片',
-  'download.macos.version': 'Beta 0.3.9',
+  'download.macos.version': '0.4.1 Beta 2',
   'download.macos.action': '下载 macOS 版',
   'download.windows.name': 'Windows',
   'download.windows.status': 'Preview 1',
