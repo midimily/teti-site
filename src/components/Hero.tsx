@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 import {useI18n} from '../i18n';
-import {downloadLinks} from '../lib/tetiProtocol';
 
 const SLIDES = ['connect', 'passport', 'collaborate'] as const;
 const AUTOPLAY_INTERVAL_MS = 5_500;
@@ -225,9 +224,7 @@ export function Hero() {
           <Button
             label={t('hero.download')}
             variant="secondary"
-            href={downloadLinks.macos}
-            target="_blank"
-            rel="noreferrer"
+            href="#download"
             icon={<Download size={16} aria-hidden="true" />}
           />
         </div>
