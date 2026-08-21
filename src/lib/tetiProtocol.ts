@@ -8,9 +8,9 @@ type RequestTetiConnectionOptions = {
 };
 
 export const downloadLinks = {
-  macos: 'https://github.com/midimily/teti-bot/releases/tag/v0.4.1-beta.2',
-  macosVersion: 'https://github.com/midimily/teti-bot/releases/tag/v0.4.1-beta.2',
-  windows: 'https://github.com/midimily/teti-bot/releases/tag/v0.4.1-beta.2-windows-preview.1',
+  macos: 'https://github.com/midimily/teti-bot/releases/tag/v0.5.3-rc.1',
+  macosVersion: 'https://github.com/midimily/teti-bot/releases/tag/v0.5.3-rc.1',
+  windows: 'https://github.com/midimily/teti-bot/releases/tag/v0.5.3-rc.1',
 };
 
 export function getTetiConnectUrl(tetiId: string) {
