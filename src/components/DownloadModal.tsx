@@ -6,6 +6,8 @@ import {Check, Copy, X} from 'lucide-react';
 import {useI18n} from '../i18n';
 import type {TetiIdentity} from '../lib/tetiData';
 import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
+import {tetiIdValue} from '../lib/siteRouting';
+import {TetiId} from './TetiId';
 
 type DownloadModalProps = {
   fallback: {identity: TetiIdentity; reason: ConnectionFallbackReason} | null;
@@ -56,7 +58,7 @@ export function DownloadModal({fallback, onClose}: DownloadModalProps) {
         >
           <X size={18} aria-hidden="true" />
         </button>
-        <span className="modal-kicker">{fallback.identity.id}</span>
+        <TetiId className="modal-kicker" tetiId={fallback.identity.id} />
         <Heading level={2} type="display-3" id="connect-modal-title">
           {t(isMobile ? 'connect.mobileTitle' : 'connect.fallbackTitle')}
         </Heading>
@@ -68,7 +70,7 @@ export function DownloadModal({fallback, onClose}: DownloadModalProps) {
             icon={copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
             onClick={() => {
               void navigator.clipboard
-                .writeText(fallback.identity.id)
+                .writeText(tetiIdValue(fallback.identity.id))
                 .then(() => setCopied(true))
                 .catch(() => setCopied(false));
             }}

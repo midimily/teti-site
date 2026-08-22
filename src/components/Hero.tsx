@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Bot,
   Check,
+  Copy,
   Download,
   FileText,
   Link2,
@@ -38,7 +39,7 @@ function ConnectScene() {
       <div className="scene-connect-panel">
         <div className="scene-input">
           <Search size={14} />
-          <span>teti_a1b2c3d4e</span>
+          <span className="scene-id-demo">(id: a1b2c3d4e <Copy size={10} />)</span>
         </div>
         <span className="scene-connect-button"><Link2 size={15} /></span>
       </div>
@@ -46,7 +47,7 @@ function ConnectScene() {
         <span className="scene-peer-dot" />
         <span className="scene-peer-copy">
           <strong>Nova</strong>
-          <small>teti_a1b2c3d4e</small>
+          <small className="scene-id-demo">(id: a1b2c3d4e <Copy size={9} />)</small>
         </span>
         <span className="scene-success"><Check size={12} /> {t('hero.scene.connected')}</span>
       </div>

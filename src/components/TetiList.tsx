@@ -7,7 +7,7 @@ import {useI18n} from '../i18n';
 import {groupDirectoryIdentities} from '../lib/directoryOrdering';
 import type {NetworkSnapshot, TetiIdentity} from '../lib/tetiData';
 import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
-import {identityPath, navigateTo, TETI_ID_PATTERN} from '../lib/siteRouting';
+import {canonicalizeTetiIdInput, identityPath, navigateTo} from '../lib/siteRouting';
 import {TetiRow} from './TetiRow';
 
 type TetiListProps = {
@@ -39,8 +39,8 @@ export function TetiList({
 
   const submitLookup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalized = query.trim().toLowerCase();
-    if (!TETI_ID_PATTERN.test(normalized)) {
+    const normalized = canonicalizeTetiIdInput(query);
+    if (!normalized) {
       setLookupState('invalid');
       return;
     }

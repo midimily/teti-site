@@ -1,6 +1,7 @@
 import {useSyncExternalStore} from 'react';
 
 export const TETI_ID_PATTERN = /^teti_[a-z0-9]{9}$/;
+const TETI_ID_PREFIX = 'teti_';
 
 export type SiteRoute =
   | {kind: 'home'}
@@ -18,6 +19,23 @@ export function parseSiteRoute(pathname: string): SiteRoute {
 export function identityPath(tetiId: string): string {
   if (!TETI_ID_PATTERN.test(tetiId)) throw new Error('Invalid canonical Teti ID');
   return `/${tetiId}`;
+}
+
+export function tetiIdValue(tetiId: string): string {
+  if (!TETI_ID_PATTERN.test(tetiId)) throw new Error('Invalid canonical Teti ID');
+  return tetiId.slice(TETI_ID_PREFIX.length);
+}
+
+export function formatTetiId(tetiId: string): string {
+  return `(id: ${tetiIdValue(tetiId)})`;
+}
+
+export function canonicalizeTetiIdInput(value: string): string | null {
+  const normalized = value.trim().toLowerCase();
+  const canonical = normalized.startsWith(TETI_ID_PREFIX)
+    ? normalized
+    : `${TETI_ID_PREFIX}${normalized}`;
+  return TETI_ID_PATTERN.test(canonical) ? canonical : null;
 }
 
 export function canonicalIdentityUrl(tetiId: string): string {

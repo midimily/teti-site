@@ -544,6 +544,16 @@ img {
   white-space: nowrap;
 }
 
+.scene-id-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.scene-id-demo svg {
+  flex: 0 0 auto;
+}
+
 .scene-connect-button {
   display: grid;
   place-items: center;
@@ -1217,19 +1227,93 @@ img {
   line-height: 1.35;
 }
 
-.teti-titleline a,
-.teti-id-link {
+.teti-titleline a {
   text-decoration: none;
 }
 
-.teti-titleline a:hover,
-.teti-id-link:hover {
+.teti-titleline a:hover {
   color: var(--teti-blue-hover);
 }
 
-.teti-titleline a:focus-visible,
-.teti-id-link:focus-visible {
+.teti-titleline a:focus-visible {
   border-radius: 3px;
+}
+
+.teti-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  color: var(--teti-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.teti-id-prefix,
+.teti-id-parenthesis {
+  color: #98a2b3;
+}
+
+.teti-id code {
+  min-width: 0;
+  color: var(--teti-blue);
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+
+.teti-id-value {
+  min-width: 0;
+  color: var(--teti-blue);
+  text-decoration: none;
+}
+
+.teti-id-value:hover {
+  color: var(--teti-blue-hover);
+}
+
+.teti-id-value:focus-visible {
+  border-radius: 3px;
+}
+
+.teti-id-copy {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: var(--teti-blue);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.teti-id-copy:active {
+  transform: scale(0.94);
+}
+
+.teti-id-copy[data-copy-state="copied"] {
+  color: #18845b;
+  background: rgba(47, 180, 118, 0.1);
+}
+
+.teti-id-copy[data-copy-state="failed"] {
+  color: #b42318;
+  background: #fff1f0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .teti-id-copy:hover {
+    color: var(--teti-blue-hover);
+    background: var(--teti-blue-soft);
+  }
 }
 
 .teti-main code {
@@ -1397,12 +1481,9 @@ img {
   gap: 10px 16px;
 }
 
-.identity-profile-idline code,
-.identity-state code {
-  color: var(--teti-blue);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+.identity-profile-idline .teti-id,
+.identity-state > .teti-id {
   font-size: 0.84rem;
-  overflow-wrap: anywhere;
 }
 
 .identity-profile-actions {
@@ -1722,10 +1803,7 @@ img {
 
 .modal-kicker {
   padding-right: 38px;
-  color: var(--teti-blue);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.78rem;
-  overflow-wrap: anywhere;
 }
 
 .icon-button {
@@ -2154,5 +2232,9 @@ button:active:not(:disabled),
     opacity: 1;
     transform: none;
     animation: none;
+  }
+
+  .teti-id-copy:active {
+    transform: none;
   }
 }

@@ -4,8 +4,9 @@ import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
 import {identityPath} from '../lib/siteRouting';
 import {ConnectButton} from './ConnectButton';
 import {Logo} from './Logo';
-import {SiteLink} from './SiteLink';
 import {StatusIndicator} from './StatusIndicator';
+import {TetiId} from './TetiId';
+import {SiteLink} from './SiteLink';
 
 type TetiRowProps = {
   identity: TetiIdentity;
@@ -29,9 +30,7 @@ export function TetiRow({identity, onConnectFallback}: TetiRowProps) {
           </strong>
           <StatusIndicator presence={identity.presence} />
         </div>
-        <SiteLink className="teti-id-link" href={identityPath(identity.id)}>
-          <code>{identity.id}</code>
-        </SiteLink>
+        <TetiId tetiId={identity.id} href={identityPath(identity.id)} />
         <p>{identity.summary ?? t('identity.noSummary')}</p>
       </div>
       <ConnectButton identity={identity} onFallback={onConnectFallback} />

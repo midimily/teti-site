@@ -1,16 +1,17 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
-import {ArrowLeft, Check, Copy, Link2, RotateCcw} from 'lucide-react';
+import {ArrowLeft, Check, Link2, RotateCcw} from 'lucide-react';
 
 import {useI18n} from '../i18n';
 import {fetchTetiIdentity, SiteApiError, type TetiIdentity} from '../lib/tetiData';
 import type {ConnectionFallbackReason} from '../lib/tetiProtocol';
 import {usePageMetadata} from '../lib/pageMetadata';
-import {canonicalIdentityUrl} from '../lib/siteRouting';
+import {canonicalIdentityUrl, formatTetiId, tetiIdValue} from '../lib/siteRouting';
 import {ConnectButton} from './ConnectButton';
 import {Logo} from './Logo';
 import {SiteLink} from './SiteLink';
 import {StatusIndicator} from './StatusIndicator';
+import {TetiId} from './TetiId';
 
 type IdentityPageProps = {
   tetiId: string;
@@ -18,7 +19,7 @@ type IdentityPageProps = {
 };
 
 type IdentityState = 'loading' | 'ready' | 'stale' | 'not-found' | 'network-error';
-type CopyState = 'id' | 'link' | 'failed' | null;
+type CopyState = 'link' | 'failed' | null;
 
 export function IdentityPage({tetiId, onConnectFallback}: IdentityPageProps) {
   const {t} = useI18n();
@@ -81,12 +82,13 @@ export function IdentityPage({tetiId, onConnectFallback}: IdentityPageProps) {
     state === 'not-found'
       ? t('profile.notFoundMetaTitle')
       : identity
-        ? t('profile.metaTitle', {name: identity.displayName ?? identity.id})
+        ? t('profile.metaTitle', {name: identity.displayName ?? formatTetiId(identity.id)})
         : t('profile.loadingMetaTitle');
-  const pageDescription = identity?.summary ?? t('profile.metaDescription', {id: tetiId});
+  const pageDescription = identity?.summary ??
+    t('profile.metaDescription', {id: tetiIdValue(tetiId)});
   usePageMetadata(pageTitle, pageDescription, `/${tetiId}`);
 
-  const copy = useCallback(async (kind: 'id' | 'link', value: string) => {
+  const copy = useCallback(async (kind: 'link', value: string) => {
     try {
       await navigator.clipboard.writeText(value);
       setCopyState(kind);
@@ -118,7 +120,7 @@ export function IdentityPage({tetiId, onConnectFallback}: IdentityPageProps) {
         <div className="identity-state">
           <span className="section-eyebrow">{t('profile.eyebrow')}</span>
           <h1 id="identity-profile-title">{t('profile.notFoundTitle')}</h1>
-          <code>{tetiId}</code>
+          <TetiId tetiId={tetiId} />
           <p>{t('profile.notFoundBody')}</p>
           <SiteLink className="text-action" href="/#network">
             {t('profile.returnToNetwork')}
@@ -128,7 +130,7 @@ export function IdentityPage({tetiId, onConnectFallback}: IdentityPageProps) {
         <div className="identity-state">
           <span className="section-eyebrow">{t('profile.eyebrow')}</span>
           <h1 id="identity-profile-title">{t('profile.networkErrorTitle')}</h1>
-          <code>{tetiId}</code>
+          <TetiId tetiId={tetiId} />
           <p>{t('profile.networkErrorBody')}</p>
           <Button
             label={t('profile.retry')}
@@ -158,7 +160,7 @@ export function IdentityPage({tetiId, onConnectFallback}: IdentityPageProps) {
                 {identity.displayName ?? t('identity.unnamed')}
               </h1>
               <div className="identity-profile-idline">
-                <code>{identity.id}</code>
+                <TetiId tetiId={identity.id} />
                 <StatusIndicator presence={identity.presence} />
               </div>
               <p>{identity.summary ?? t('identity.noSummary')}</p>
@@ -167,19 +169,6 @@ export function IdentityPage({tetiId, onConnectFallback}: IdentityPageProps) {
 
           <div className="identity-profile-actions">
             <ConnectButton identity={identity} onFallback={onConnectFallback} />
-            <Button
-              label={copyState === 'id' ? t('profile.copiedId') : t('profile.copyId')}
-              variant="secondary"
-              size="sm"
-              icon={
-                copyState === 'id' ? (
-                  <Check size={15} aria-hidden="true" />
-                ) : (
-                  <Copy size={15} aria-hidden="true" />
-                )
-              }
-              onClick={() => void copy('id', identity.id)}
-            />
             <Button
               label={copyState === 'link' ? t('profile.copiedLink') : t('profile.copyLink')}
               variant="secondary"
